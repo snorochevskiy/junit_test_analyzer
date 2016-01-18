@@ -1,0 +1,92 @@
+package main
+
+import (
+	"log"
+)
+
+type DaoService struct {
+}
+
+var DAO DaoService = DaoService{}
+
+const TEST_CASE_STATUS_FAILED = "FAILURE"
+const TEST_CASE_STATUS_SKIPPED = "SKIPPED"
+const TEST_CASE_STATUS_PASSED = "PASSED"
+
+func (*DaoService) CreateTestsLaunch(branchName string) int64 {
+	res, err := ExecuteInsert("INSERT INTO test_launches(branch) values(?)", branchName)
+	if err != nil {
+		log.Println(err)
+	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		log.Println(err)
+	}
+	return id
+}
+
+func (dao *DaoService) AddTestCase(launchId int64, testCase *TestCase) {
+
+	var testCaseStatus string
+	if testCase.Failure != nil {
+		testCaseStatus = TEST_CASE_STATUS_FAILED
+	} else if testCase.Skipped != nil {
+		testCaseStatus = TEST_CASE_STATUS_SKIPPED
+	} else {
+		testCaseStatus = TEST_CASE_STATUS_PASSED
+	}
+
+	res, err := ExecuteInsert(
+		"INSERT INTO test_cases(name, status, test_launch_id) values(?, ?, ?)", testCase.Name, testCaseStatus, launchId)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	insertedTestCaseId, err := res.LastInsertId()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	if testCase.Failure != nil {
+		dao.AddTestCaseFailure(insertedTestCaseId, testCase.Failure)
+	}
+
+}
+
+func (*DaoService) AddTestCaseFailure(testCaseId int64, failure *FailureStatus) {
+	_, err := ExecuteInsert(
+		"INSERT INTO test_case_failures(failure_type, failure_message, failure_text, test_case_id) values(?, ?, ?, ?)",
+		failure.Type, failure.Message, failure.Text, testCaseId)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+}
+
+func (dao *DaoService) GetAllTestLaunches() []*TestLaunchEntity {
+	rows, err := ExecuteSelect("SELECT id, branch, creation_date FROM test_launches ORDER BY id")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	testLaunches := make([]*TestLaunchEntity, 0, 10)
+	for rows.Next() {
+		testLaunch := new(TestLaunchEntity)
+		ScanStruct(rows, testLaunch)
+		log.Println(*testLaunch)
+		testLaunch.FailedTestsNum = dao.GetNumberOfFailedTestInLaunch(testLaunch.Id)
+		testLaunches = append(testLaunches, testLaunch)
+	}
+	return testLaunches
+}
+
+func (*DaoService) GetNumberOfFailedTestInLaunch(launchId int64) int {
+
+	row := SelectOneRow("SELECT count(*) FROM test_cases WHERE test_launch_id = (?) AND status IN ('FAILURE')", launchId)
+	num := new(int)
+	row.Scan(num)
+	return *num
+}

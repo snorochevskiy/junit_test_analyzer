@@ -1,0 +1,10 @@
+{{define "title"}}Test Launches{{end}}
+
+{{define "body"}}
+<h1>Test Launches</h1>
+
+{{range $index, $val := .}}
+ID: {{$val.Id}}, Branch: {{$val.Branch}}, Created: {{$val.CreateDate}}, FailedTestsNum: {{$val.FailedTestsNum}} <br />
+{{end}}
+
+{{end}}
