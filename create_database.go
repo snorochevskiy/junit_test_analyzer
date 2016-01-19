@@ -6,37 +6,37 @@ import (
 
 const DDL_TESTS_LAUNCHES = `
 CREATE TABLE IF NOT EXISTS test_launches (
-	id integer PRIMARY KEY AUTOINCREMENT,
+	launch_id integer PRIMARY KEY AUTOINCREMENT,
 	branch TEXT,
 	creation_date DATE NOT NULL DEFAULT (datetime('now','localtime'))
 )`
 
 const DDL_TEST_SUITES = `
 CREATE TABLE IF NOT EXISTS test_suites (
-	id integer PRIMARY KEY AUTOINCREMENT,
+	test_suite_id integer PRIMARY KEY AUTOINCREMENT,
 	name TEXT,
-	test_launch_id INTEGER,
-	FOREIGN KEY(test_launch_id) REFERENCES test_launches(id)
+	parent_launch_id INTEGER,
+	FOREIGN KEY(parent_launch_id) REFERENCES test_launches(launch_id)
 )`
 
 const DDL_TEST_CASES = `
 CREATE TABLE IF NOT EXISTS test_cases (
-	id integer PRIMARY KEY AUTOINCREMENT,
+	test_case_id integer PRIMARY KEY AUTOINCREMENT,
 	name TEXT,
 	class_name TEXT,
 	status TEXT,
-	test_launch_id INTEGER,
-	FOREIGN KEY(test_launch_id) REFERENCES test_launches(id)
+	parent_launch_id INTEGER,
+	FOREIGN KEY(parent_launch_id) REFERENCES test_launches(launch_id)
 )`
 
 const DDL_TEST_CASE_FAILURE = `
 CREATE TABLE IF NOT EXISTS test_case_failures (
-	id integer PRIMARY KEY AUTOINCREMENT,
+	test_case_failure_id integer PRIMARY KEY AUTOINCREMENT,
 	failure_type TEXT NULL,
 	failure_message TEXT NULL,
 	failure_text TEXT NULL,
-	test_case_id INTEGER,
-	FOREIGN KEY(test_case_id) REFERENCES test_cases(id)
+	parent_test_case_id INTEGER,
+	FOREIGN KEY(parent_test_case_id) REFERENCES test_cases(test_case_id)
 )`
 
 func createDbIfNotExists() {

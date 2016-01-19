@@ -9,6 +9,43 @@ import (
 	"strings"
 )
 
+type TestSuite struct {
+	Name       string         `xml:"name,attr"`
+	Properties *PropertiesTag `xml:"properties"`
+	TestCases  []TestCase     `xml:"testcase"`
+
+	TestsNumber  string `xml:"tests,attr"`
+	TestsSkipped string `xml:"skipped,attr"`
+	TestsFailed  string `xml:"failures,attr"`
+	TestsErrors  string `xml:"errors,attr"`
+
+	// Error of whole suite
+	SystemErr string `xml:"system-err,omitempty"`
+}
+
+type PropertiesTag struct {
+}
+
+type TestCase struct {
+	Name      string         `xml:"name,attr"`
+	ClassName string         `xml:"classname,attr"`
+	Skipped   *SkippedStatus `xml:"skipped"`
+	Failure   *FailureStatus `xml:"failure"`
+}
+
+type SkippedStatus struct {
+}
+
+type FailureStatus struct {
+	Message string `xml:"message,attr"`
+	Type    string `xml:"type,attr"`
+	Text    string `xml:",chardata"`
+}
+
+func (testcase *TestCase) IsSkipped() bool {
+	return testcase.Skipped != nil
+}
+
 func ProcessAllResultsFiles(branch string, fullDirPath string) {
 	reportFiles, reportFilesErr := ioutil.ReadDir(fullDirPath)
 	if reportFilesErr != nil {

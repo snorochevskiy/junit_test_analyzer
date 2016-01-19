@@ -57,7 +57,7 @@ func (dao *DaoService) AddTestCase(launchId int64, testCase *TestCase) {
 	}
 
 	res, err := ExecuteInsert(
-		"INSERT INTO test_cases(name, class_name, status, test_launch_id) values(?, ?, ?, ?)",
+		"INSERT INTO test_cases(name, class_name, status, parent_launch_id) values(?, ?, ?, ?)",
 		testCase.Name, testCase.ClassName, testCaseStatus, launchId)
 	if err != nil {
 		log.Println(err)
@@ -78,7 +78,7 @@ func (dao *DaoService) AddTestCase(launchId int64, testCase *TestCase) {
 
 func (*DaoService) AddTestCaseFailure(testCaseId int64, failure *FailureStatus) {
 	_, err := ExecuteInsert(
-		"INSERT INTO test_case_failures(failure_type, failure_message, failure_text, test_case_id) values(?, ?, ?, ?)",
+		"INSERT INTO test_case_failures(failure_type, failure_message, failure_text, parent_test_case_id) values(?, ?, ?, ?)",
 		failure.Type, failure.Message, failure.Text, testCaseId)
 	if err != nil {
 		log.Println(err)
@@ -86,8 +86,8 @@ func (*DaoService) AddTestCaseFailure(testCaseId int64, failure *FailureStatus) 
 	}
 }
 
-func (dao *DaoService) GetAllTestLaunches() []*TestLaunchEntity {
-	rows, err := ExecuteSelect("SELECT id, branch, creation_date FROM test_launches ORDER BY id")
+func (dao *DaoService) GetAllLaunches() []*TestLaunchEntity {
+	rows, err := ExecuteSelect("SELECT launch_id, branch, creation_date FROM test_launches ORDER BY launch_id")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -104,7 +104,7 @@ func (dao *DaoService) GetAllTestLaunches() []*TestLaunchEntity {
 }
 
 func (*DaoService) GetAllTestsForLaunch(launchId int64) []*TestCaseEntity {
-	rows, err := ExecuteSelect("SELECT id, name, class_name, status, test_launch_id FROM test_cases WHERE test_launch_id = ?", launchId)
+	rows, err := ExecuteSelect("SELECT test_case_id, name, class_name, status, parent_launch_id FROM test_cases WHERE parent_launch_id = ?", launchId)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -118,9 +118,51 @@ func (*DaoService) GetAllTestsForLaunch(launchId int64) []*TestCaseEntity {
 	return testCases
 }
 
+func (*DaoService) GetTestCaseDetails(testCaseId int64) *TestCaseEntity {
+	rows, err := ExecuteSelect("SELECT test_case_id, name, class_name, status, parent_launch_id FROM test_cases WHERE test_case_id = ?", testCaseId)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	if !rows.Next() {
+		return nil
+	}
+
+	testCase := new(TestCaseEntity)
+	scanErr := ScanStruct(rows, testCase)
+	if scanErr != nil {
+		log.Println(scanErr)
+	}
+
+	if testCase.Status == TEST_CASE_STATUS_FAILED {
+		failedInfoRows, failedInfoErr := ExecuteSelect("SELECT test_case_failure_id, failure_message, failure_type, failure_text FROM test_case_failures WHERE parent_test_case_id = ?", testCaseId)
+		if failedInfoErr != nil {
+			log.Println(failedInfoErr)
+		} else if failedInfoRows.Next() {
+			testFailure := new(FailureEntity)
+			scanErr := ScanStruct(failedInfoRows, testFailure)
+			if scanErr != nil {
+				log.Println(scanErr)
+			}
+
+			testCase.FailureInfo = testFailure
+		} else {
+			log.Printf("No failed info for %v", testCaseId)
+		}
+
+	}
+
+	return testCase
+}
+
 func (*DaoService) GetNumberOfFailedTestInLaunch(launchId int64) int {
-	row := SelectOneRow("SELECT count(*) FROM test_cases WHERE test_launch_id = (?) AND status IN ('FAILURE')", launchId)
+	row := SelectOneRow("SELECT count(*) FROM test_cases WHERE parent_launch_id = (?) AND status IN ('FAILURE')", launchId)
 	num := new(int)
 	row.Scan(num)
 	return *num
+}
+
+func (*DaoService) GetDiffBetweenLaunches(launchId1 int64, launchId2 int64) {
+
 }

@@ -1,0 +1,22 @@
+{{define "title"}}View TestCase{{end}}
+
+{{define "body"}}
+<h1>Test Info</h1>
+
+
+ID: {{.Id}} <br />
+Name: {{.Name}} <br />
+ClassName: {{.ClassName}} <br />
+Status: {{.Status}} <br />
+
+{{if .FailureInfo}}
+<br />
+Message: {{.FailureInfo.Message}}<br />
+Type: {{.FailureInfo.Type}}<br />
+Text: <br />
+<pre>
+{{.FailureInfo.Text}}
+</pre>
+{{end}}
+
+{{end}}

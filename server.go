@@ -10,6 +10,7 @@ func startServer(port string) {
 	http.HandleFunc("/", serveRoot)
 	http.HandleFunc("/branch", serveLaunchesInBranch)
 	http.HandleFunc("/launch", serverLaunch)
+	http.HandleFunc("/test", serverTestCase)
 
 	log.Println("Listening...")
 	http.ListenAndServe(":"+port, nil)
@@ -27,7 +28,7 @@ func serveRoot(w http.ResponseWriter, r *http.Request) {
 
 func serveLaunchesInBranch(w http.ResponseWriter, r *http.Request) {
 
-	launches := DAO.GetAllTestLaunches()
+	launches := DAO.GetAllLaunches()
 
 	err := RenderInCommonTemplate(w, launches, "test_launches.template")
 	if err != nil {
@@ -47,6 +48,23 @@ func serverLaunch(w http.ResponseWriter, r *http.Request) {
 	testCases := DAO.GetAllTestsForLaunch(int64(launchId))
 
 	err := RenderInCommonTemplate(w, testCases, "view_launch.template")
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
+func serverTestCase(w http.ResponseWriter, r *http.Request) {
+	testCaseIdParam := r.URL.Query().Get("test_id")
+	testCaseId, parseErr := strconv.Atoi(testCaseIdParam)
+	if parseErr != nil {
+		log.Println(parseErr)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	testCase := DAO.GetTestCaseDetails(int64(testCaseId))
+
+	err := RenderInCommonTemplate(w, testCase, "view_test_case.template")
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
