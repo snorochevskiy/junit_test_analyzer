@@ -1,0 +1,14 @@
+{{define "title"}}View Launch{{end}}
+
+{{define "body"}}
+<h1>Tests</h1>
+
+
+<ul>
+{{range $index, $val := .}}
+	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
+{{end}}
+</ul>
+
+
+{{end}}

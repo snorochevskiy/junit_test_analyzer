@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"net/http"
 	"os"
 	"path"
 )
@@ -40,4 +41,18 @@ func createTemplateForFiles(filenames ...string) (*template.Template, error) {
 		fmt.Println(tempErr)
 	}
 	return temp, tempErr
+}
+
+func RenderInCommonTemplate(w http.ResponseWriter, dto interface{}, templateName string) error {
+	template, err := createCommonTemplate(templateName)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	if err := template.ExecuteTemplate(w, "layout", dto); err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
 }

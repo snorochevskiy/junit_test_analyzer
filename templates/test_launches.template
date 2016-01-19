@@ -3,8 +3,11 @@
 {{define "body"}}
 <h1>Test Launches</h1>
 
+<ul>
 {{range $index, $val := .}}
-ID: {{$val.Id}}, Branch: {{$val.Branch}}, Created: {{$val.CreateDate}}, FailedTestsNum: {{$val.FailedTestsNum}} <br />
+	<li><a href="launch?launch_id={{$val.Id}}">{{$val.CreateDate}} - FailedTestsNum: {{$val.FailedTestsNum}}</a></li>
 {{end}}
+</ul>
+
 
 {{end}}

@@ -23,6 +23,7 @@ const DDL_TEST_CASES = `
 CREATE TABLE IF NOT EXISTS test_cases (
 	id integer PRIMARY KEY AUTOINCREMENT,
 	name TEXT,
+	class_name TEXT,
 	status TEXT,
 	test_launch_id INTEGER,
 	FOREIGN KEY(test_launch_id) REFERENCES test_launches(id)

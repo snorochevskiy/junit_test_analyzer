@@ -1,0 +1,14 @@
+{{define "title"}}Test Launches{{end}}
+
+{{define "body"}}
+<h1>Branches</h1>
+
+<h2>Branches</h2>
+<ul>
+{{range $index, $val := .}}
+	<li><a href="/branch?branchName={{$val}}" >{{$val}}</a></li>
+{{end}}
+</ul>
+
+
+{{end}}

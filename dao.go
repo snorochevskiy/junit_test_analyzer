@@ -13,6 +13,25 @@ const TEST_CASE_STATUS_FAILED = "FAILURE"
 const TEST_CASE_STATUS_SKIPPED = "SKIPPED"
 const TEST_CASE_STATUS_PASSED = "PASSED"
 
+func (*DaoService) GetAllBranches() []string {
+	rows, err := ExecuteSelect("SELECT DISTINCT branch FROM test_launches ORDER BY branch")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	branchNames := make([]string, 0, 10)
+	for rows.Next() {
+		var branchName string
+		scanErr := rows.Scan(&branchName)
+		if scanErr != nil {
+			log.Println(scanErr)
+			continue
+		}
+		branchNames = append(branchNames, branchName)
+	}
+	return branchNames
+}
+
 func (*DaoService) CreateTestsLaunch(branchName string) int64 {
 	res, err := ExecuteInsert("INSERT INTO test_launches(branch) values(?)", branchName)
 	if err != nil {
@@ -38,7 +57,8 @@ func (dao *DaoService) AddTestCase(launchId int64, testCase *TestCase) {
 	}
 
 	res, err := ExecuteInsert(
-		"INSERT INTO test_cases(name, status, test_launch_id) values(?, ?, ?)", testCase.Name, testCaseStatus, launchId)
+		"INSERT INTO test_cases(name, class_name, status, test_launch_id) values(?, ?, ?, ?)",
+		testCase.Name, testCase.ClassName, testCaseStatus, launchId)
 	if err != nil {
 		log.Println(err)
 		return
@@ -83,8 +103,22 @@ func (dao *DaoService) GetAllTestLaunches() []*TestLaunchEntity {
 	return testLaunches
 }
 
-func (*DaoService) GetNumberOfFailedTestInLaunch(launchId int64) int {
+func (*DaoService) GetAllTestsForLaunch(launchId int64) []*TestCaseEntity {
+	rows, err := ExecuteSelect("SELECT id, name, class_name, status, test_launch_id FROM test_cases WHERE test_launch_id = ?", launchId)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	testCases := make([]*TestCaseEntity, 0, 10)
+	for rows.Next() {
+		testCase := new(TestCaseEntity)
+		ScanStruct(rows, testCase)
+		testCases = append(testCases, testCase)
+	}
+	return testCases
+}
+
+func (*DaoService) GetNumberOfFailedTestInLaunch(launchId int64) int {
 	row := SelectOneRow("SELECT count(*) FROM test_cases WHERE test_launch_id = (?) AND status IN ('FAILURE')", launchId)
 	num := new(int)
 	row.Scan(num)
