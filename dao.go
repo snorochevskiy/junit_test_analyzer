@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"log"
 )
 
@@ -9,7 +11,7 @@ type DaoService struct {
 
 var DAO DaoService = DaoService{}
 
-const TEST_CASE_STATUS_FAILED = "FAILURE"
+const TEST_CASE_STATUS_FAILED = "FAILED"
 const TEST_CASE_STATUS_SKIPPED = "SKIPPED"
 const TEST_CASE_STATUS_PASSED = "PASSED"
 
@@ -56,9 +58,12 @@ func (dao *DaoService) AddTestCase(launchId int64, testCase *TestCase) {
 		testCaseStatus = TEST_CASE_STATUS_PASSED
 	}
 
+	md5Hash := md5.Sum([]byte(testCase.ClassName + "#" + testCase.Name))
+	md5HashString := hex.EncodeToString(md5Hash[:])
+
 	res, err := ExecuteInsert(
-		"INSERT INTO test_cases(name, class_name, status, parent_launch_id) values(?, ?, ?, ?)",
-		testCase.Name, testCase.ClassName, testCaseStatus, launchId)
+		"INSERT INTO test_cases(name, class_name, md5_hash, status, parent_launch_id) values(?, ?, ?, ?, ?)",
+		testCase.Name, testCase.ClassName, md5HashString, testCaseStatus, launchId)
 	if err != nil {
 		log.Println(err)
 		return
@@ -104,7 +109,7 @@ func (dao *DaoService) GetAllLaunches() []*TestLaunchEntity {
 }
 
 func (*DaoService) GetAllTestsForLaunch(launchId int64) []*TestCaseEntity {
-	rows, err := ExecuteSelect("SELECT test_case_id, name, class_name, status, parent_launch_id FROM test_cases WHERE parent_launch_id = ?", launchId)
+	rows, err := ExecuteSelect("SELECT test_case_id, name, class_name, status, parent_launch_id FROM test_cases WHERE parent_launch_id = ? ORDER BY status", launchId)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -163,6 +168,60 @@ func (*DaoService) GetNumberOfFailedTestInLaunch(launchId int64) int {
 	return *num
 }
 
-func (*DaoService) GetDiffBetweenLaunches(launchId1 int64, launchId2 int64) {
+func (*DaoService) GetNewTestsInDiff(launchId1 int64, launchId2 int64) []*TestCaseEntity {
+	newTestsRows, newTestRowsErr := ExecuteSelect(
+		"SELECT test_case_id, name, class_name, status, parent_launch_id FROM test_cases WHERE md5_hash IN ( "+
+			"SELECT md5_hash FROM test_cases WHERE parent_launch_id = ? EXCEPT "+
+			"SELECT md5_hash FROM test_cases WHERE parent_launch_id = ?"+
+			" ) ORDER BY status", launchId2, launchId1)
+	if newTestRowsErr != nil {
+		log.Println(newTestRowsErr)
+		return nil
+	}
 
+	testCases := make([]*TestCaseEntity, 0, 10)
+	for newTestsRows.Next() {
+		testCase := new(TestCaseEntity)
+		ScanStruct(newTestsRows, testCase)
+		testCases = append(testCases, testCase)
+	}
+	return testCases
+}
+
+func (*DaoService) GetFailedTestsInDiff(launchId1 int64, launchId2 int64) []*TestCaseEntity {
+	newTestsRows, newTestRowsErr := ExecuteSelect(
+		"SELECT test_case_id, name, class_name, status, parent_launch_id FROM test_cases WHERE status = 'FAILED' AND parent_launch_id = ? AND md5_hash IN ( "+
+			"SELECT md5_hash FROM test_cases WHERE parent_launch_id = ? AND status = 'PASSED'"+
+			" )", launchId2, launchId1)
+	if newTestRowsErr != nil {
+		log.Println(newTestRowsErr)
+		return nil
+	}
+
+	testCases := make([]*TestCaseEntity, 0, 10)
+	for newTestsRows.Next() {
+		testCase := new(TestCaseEntity)
+		ScanStruct(newTestsRows, testCase)
+		testCases = append(testCases, testCase)
+	}
+	return testCases
+}
+
+func (*DaoService) GetFixedTestsInDiff(launchId1 int64, launchId2 int64) []*TestCaseEntity {
+	newTestsRows, newTestRowsErr := ExecuteSelect(
+		"SELECT test_case_id, name, class_name, status, parent_launch_id FROM test_cases WHERE status = 'PASSED' AND parent_launch_id = ? AND md5_hash IN ( "+
+			"SELECT md5_hash FROM test_cases WHERE parent_launch_id = ? AND status = 'FAILED'"+
+			" )", launchId2, launchId1)
+	if newTestRowsErr != nil {
+		log.Println(newTestRowsErr)
+		return nil
+	}
+
+	testCases := make([]*TestCaseEntity, 0, 10)
+	for newTestsRows.Next() {
+		testCase := new(TestCaseEntity)
+		ScanStruct(newTestsRows, testCase)
+		testCases = append(testCases, testCase)
+	}
+	return testCases
 }

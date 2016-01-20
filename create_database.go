@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS test_suites (
 const DDL_TEST_CASES = `
 CREATE TABLE IF NOT EXISTS test_cases (
 	test_case_id integer PRIMARY KEY AUTOINCREMENT,
+	md5_hash TEXT,
 	name TEXT,
 	class_name TEXT,
 	status TEXT,

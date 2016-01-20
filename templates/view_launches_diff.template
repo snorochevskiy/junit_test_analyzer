@@ -1,0 +1,30 @@
+{{define "title"}}View Launch{{end}}
+
+{{define "body"}}
+<h1>Diff Between Test Launches</h1>
+
+<a href="/launch?launch_id={{.LaunchId1}}">Launch 1</a>
+<a href="/launch?launch_id={{.LaunchId2}}">Launch 2</a>
+
+<h2>Added tests</h2>
+<ul>
+{{range $index, $val := .NewTests}}
+	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
+{{end}}
+</ul>
+
+<h2>PASSED -> FAILED</h2>
+<ul>
+{{range $index, $val := .FailedTests}}
+	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
+{{end}}
+</ul>
+
+<h2>FAILED -> PASSED</h2>
+<ul>
+{{range $index, $val := .FixedTests}}
+	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
+{{end}}
+</ul>
+
+{{end}}
