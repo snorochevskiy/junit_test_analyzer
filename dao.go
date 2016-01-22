@@ -162,7 +162,7 @@ func (*DaoService) GetTestCaseDetails(testCaseId int64) *TestCaseEntity {
 }
 
 func (*DaoService) GetNumberOfFailedTestInLaunch(launchId int64) int {
-	row := SelectOneRow("SELECT count(*) FROM test_cases WHERE parent_launch_id = (?) AND status IN ('FAILURE')", launchId)
+	row := SelectOneRow("SELECT count(*) FROM test_cases WHERE parent_launch_id = (?) AND status IN ('FAILED')", launchId)
 	num := new(int)
 	row.Scan(num)
 	return *num

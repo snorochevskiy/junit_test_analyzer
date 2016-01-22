@@ -21,7 +21,7 @@ func serveRoot(w http.ResponseWriter, r *http.Request) {
 
 	branches := DAO.GetAllBranches()
 
-	err := RenderInCommonTemplate(w, branches, "list_branches.template")
+	err := RenderInCommonTemplate(w, branches, "list_branches.html")
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -31,7 +31,7 @@ func serveLaunchesInBranch(w http.ResponseWriter, r *http.Request) {
 
 	launches := DAO.GetAllLaunches()
 
-	err := RenderInCommonTemplate(w, launches, "test_launches.template")
+	err := RenderInCommonTemplate(w, launches, "view_branch.html")
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -48,7 +48,7 @@ func serverLaunch(w http.ResponseWriter, r *http.Request) {
 
 	testCases := DAO.GetAllTestsForLaunch(int64(launchId))
 
-	err := RenderInCommonTemplate(w, testCases, "view_launch.template")
+	err := RenderInCommonTemplate(w, testCases, "view_launch.html")
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -65,7 +65,7 @@ func serverTestCase(w http.ResponseWriter, r *http.Request) {
 
 	testCase := DAO.GetTestCaseDetails(int64(testCaseId))
 
-	err := RenderInCommonTemplate(w, testCase, "view_test_case.template")
+	err := RenderInCommonTemplate(w, testCase, "view_test_case.html")
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -103,7 +103,7 @@ func serveDiffLaunches(w http.ResponseWriter, r *http.Request) {
 	dto.FailedTests = DAO.GetFailedTestsInDiff(int64(launchId1), int64(launchId2))
 	dto.FixedTests = DAO.GetFixedTestsInDiff(int64(launchId1), int64(launchId2))
 
-	err := RenderInCommonTemplate(w, dto, "view_launches_diff.template")
+	err := RenderInCommonTemplate(w, dto, "view_launches_diff.html")
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}

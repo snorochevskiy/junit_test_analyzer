@@ -10,7 +10,7 @@ import (
 )
 
 const TEPLATE_DIR = "templates"
-const ROOT_TEPLATE_FILE = "layout.template"
+const ROOT_TEPLATE_FILE = "layout.html"
 
 func createCommonTemplate(filenames ...string) (*template.Template, error) {
 	args := make([]string, 1, len(filenames)+1)
