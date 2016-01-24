@@ -1,8 +1,6 @@
 package main
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"log"
 )
 
@@ -15,11 +13,70 @@ const TEST_CASE_STATUS_FAILED = "FAILED"
 const TEST_CASE_STATUS_SKIPPED = "SKIPPED"
 const TEST_CASE_STATUS_PASSED = "PASSED"
 
+func (*DaoService) PersistLaunch(branch string, testCases []*TestCase) error {
+	connection, err := OpenDbConnection()
+	if err != nil {
+		return nil
+	}
+	defer connection.Close()
+
+	transaction, err := connection.Begin()
+	if err != nil {
+		return err
+	}
+
+	res, err := transaction.Exec("INSERT INTO test_launches(branch) values(?)", branch)
+	if err != nil {
+		transaction.Rollback()
+		return err
+	}
+	launchId, err := res.LastInsertId()
+	if err != nil {
+		transaction.Rollback()
+		return err
+	}
+
+	testStmt, err := transaction.Prepare("INSERT INTO test_cases(name, class_name, md5_hash, status, parent_launch_id) values(?, ?, ?, ?, ?)")
+	if err != nil {
+		transaction.Rollback()
+		return err
+	}
+
+	failureStmt, err := transaction.Prepare("INSERT INTO test_case_failures(failure_type, failure_message, failure_text, parent_test_case_id) values(?, ?, ?, ?)")
+	if err != nil {
+		transaction.Rollback()
+		return err
+	}
+
+	for _, test := range testCases {
+		res, err := testStmt.Exec(test.Name, test.ClassName, test.Md5Hash, test.TestCaseStatus, launchId)
+		if err != nil {
+			transaction.Rollback()
+			return err
+		}
+		if test.Failure != nil {
+			testId, err := res.LastInsertId()
+			if err != nil {
+				transaction.Rollback()
+				return err
+			}
+			_, failureAddErr := failureStmt.Exec(test.Failure.Type, test.Failure.Message, test.Failure.Text, testId)
+			if failureAddErr != nil {
+				transaction.Rollback()
+				return failureAddErr
+			}
+		}
+	}
+	transaction.Commit()
+	return nil
+}
+
 func (*DaoService) GetAllBranches() []string {
 	rows, err := ExecuteSelect("SELECT DISTINCT branch FROM test_launches ORDER BY branch")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
+	defer rows.Close()
 
 	branchNames := make([]string, 0, 10)
 	for rows.Next() {
@@ -34,68 +91,13 @@ func (*DaoService) GetAllBranches() []string {
 	return branchNames
 }
 
-func (*DaoService) CreateTestsLaunch(branchName string) int64 {
-	res, err := ExecuteInsert("INSERT INTO test_launches(branch) values(?)", branchName)
+func (dao *DaoService) GetAllLaunchesInBranch(branch string) []*TestLaunchEntity {
+	rows, err := ExecuteSelect("SELECT launch_id, branch, creation_date FROM test_launches WHERE branch = ? ORDER BY launch_id", branch)
 	if err != nil {
 		log.Println(err)
+		return nil
 	}
-
-	id, err := res.LastInsertId()
-	if err != nil {
-		log.Println(err)
-	}
-	return id
-}
-
-func (dao *DaoService) AddTestCase(launchId int64, testCase *TestCase) {
-
-	var testCaseStatus string
-	if testCase.Failure != nil {
-		testCaseStatus = TEST_CASE_STATUS_FAILED
-	} else if testCase.Skipped != nil {
-		testCaseStatus = TEST_CASE_STATUS_SKIPPED
-	} else {
-		testCaseStatus = TEST_CASE_STATUS_PASSED
-	}
-
-	md5Hash := md5.Sum([]byte(testCase.ClassName + "#" + testCase.Name))
-	md5HashString := hex.EncodeToString(md5Hash[:])
-
-	res, err := ExecuteInsert(
-		"INSERT INTO test_cases(name, class_name, md5_hash, status, parent_launch_id) values(?, ?, ?, ?, ?)",
-		testCase.Name, testCase.ClassName, md5HashString, testCaseStatus, launchId)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	insertedTestCaseId, err := res.LastInsertId()
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	if testCase.Failure != nil {
-		dao.AddTestCaseFailure(insertedTestCaseId, testCase.Failure)
-	}
-
-}
-
-func (*DaoService) AddTestCaseFailure(testCaseId int64, failure *FailureStatus) {
-	_, err := ExecuteInsert(
-		"INSERT INTO test_case_failures(failure_type, failure_message, failure_text, parent_test_case_id) values(?, ?, ?, ?)",
-		failure.Type, failure.Message, failure.Text, testCaseId)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-}
-
-func (dao *DaoService) GetAllLaunches() []*TestLaunchEntity {
-	rows, err := ExecuteSelect("SELECT launch_id, branch, creation_date FROM test_launches ORDER BY launch_id")
-	if err != nil {
-		log.Fatal(err)
-	}
+	defer rows.Close()
 
 	testLaunches := make([]*TestLaunchEntity, 0, 10)
 	for rows.Next() {
@@ -108,11 +110,36 @@ func (dao *DaoService) GetAllLaunches() []*TestLaunchEntity {
 	return testLaunches
 }
 
+func (*DaoService) GetLaunchInfo(launchId int64) *TestLaunchEntity {
+
+	rows, err := ExecuteSelect("SELECT launch_id, branch, creation_date FROM test_launches WHERE launch_id = ?", launchId)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return nil
+	}
+
+	testLaunch := new(TestLaunchEntity)
+	scanErr := ScanStruct(rows, testLaunch)
+
+	if scanErr != nil {
+		log.Println(scanErr)
+		return nil
+	}
+
+	return testLaunch
+}
+
 func (*DaoService) GetAllTestsForLaunch(launchId int64) []*TestCaseEntity {
 	rows, err := ExecuteSelect("SELECT test_case_id, name, class_name, status, parent_launch_id FROM test_cases WHERE parent_launch_id = ? ORDER BY status", launchId)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer rows.Close()
 
 	testCases := make([]*TestCaseEntity, 0, 10)
 	for rows.Next() {
@@ -129,6 +156,7 @@ func (*DaoService) GetTestCaseDetails(testCaseId int64) *TestCaseEntity {
 		log.Println(err)
 		return nil
 	}
+	defer rows.Close()
 
 	if !rows.Next() {
 		return nil
@@ -178,6 +206,7 @@ func (*DaoService) GetNewTestsInDiff(launchId1 int64, launchId2 int64) []*TestCa
 		log.Println(newTestRowsErr)
 		return nil
 	}
+	defer newTestsRows.Close()
 
 	testCases := make([]*TestCaseEntity, 0, 10)
 	for newTestsRows.Next() {
@@ -197,6 +226,7 @@ func (*DaoService) GetFailedTestsInDiff(launchId1 int64, launchId2 int64) []*Tes
 		log.Println(newTestRowsErr)
 		return nil
 	}
+	defer newTestsRows.Close()
 
 	testCases := make([]*TestCaseEntity, 0, 10)
 	for newTestsRows.Next() {
@@ -216,6 +246,7 @@ func (*DaoService) GetFixedTestsInDiff(launchId1 int64, launchId2 int64) []*Test
 		log.Println(newTestRowsErr)
 		return nil
 	}
+	defer newTestsRows.Close()
 
 	testCases := make([]*TestCaseEntity, 0, 10)
 	for newTestsRows.Next() {
@@ -224,4 +255,13 @@ func (*DaoService) GetFixedTestsInDiff(launchId1 int64, launchId2 int64) []*Test
 		testCases = append(testCases, testCase)
 	}
 	return testCases
+}
+
+func (*DaoService) DeleteLaunch(launchId int64) error {
+	_, err := ExecuteDelete("DELETE FROM test_launches WHERE launch_id = ?", launchId)
+	if err != nil {
+		// TODO process an error ?
+		return err
+	}
+	return nil
 }

@@ -3,12 +3,16 @@
 {{define "body"}}
 <h1>Tests</h1>
 
+<table border="1">
 
-<ul>
 {{range $index, $val := .}}
-	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
+	<tr>
+		<td>&nbsp;&nbsp;&nbsp;&nbsp;{{$val.GetPackage}}<br /><b>{{$val.GetClassName}}</b></td>
+		<td><a href="/test?test_id={{$val.Id}}" >{{$val.Name}}</a></td>
+		<td>{{$val.Status}}</td>
+	</tr>
 {{end}}
-</ul>
 
+<table>
 
 {{end}}

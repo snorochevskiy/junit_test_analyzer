@@ -5,7 +5,7 @@
 
 <ul>
 {{range $index, $val := .}}
-	<li><a href="launch?launch_id={{$val.Id}}">{{$val.CreateDate}} - FailedTestsNum: {{$val.FailedTestsNum}}</a></li>
+	<li><a href="launch?launch_id={{$val.Id}}">{{$val.CreateDate}} - FailedTestsNum: {{$val.FailedTestsNum}}</a> [<a href="/delete-launch?launch_id={{$val.Id}}">DELETE</a>]</li>
 {{end}}
 </ul>
 

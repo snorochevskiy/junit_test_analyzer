@@ -26,8 +26,7 @@ CREATE TABLE IF NOT EXISTS test_cases (
 	name TEXT,
 	class_name TEXT,
 	status TEXT,
-	parent_launch_id INTEGER,
-	FOREIGN KEY(parent_launch_id) REFERENCES test_launches(launch_id)
+	parent_launch_id INTEGER REFERENCES test_launches(launch_id) ON DELETE CASCADE
 )`
 
 const DDL_TEST_CASE_FAILURE = `
@@ -36,8 +35,7 @@ CREATE TABLE IF NOT EXISTS test_case_failures (
 	failure_type TEXT NULL,
 	failure_message TEXT NULL,
 	failure_text TEXT NULL,
-	parent_test_case_id INTEGER,
-	FOREIGN KEY(parent_test_case_id) REFERENCES test_cases(test_case_id)
+	parent_test_case_id INTEGER REFERENCES test_cases(test_case_id) ON DELETE CASCADE 
 )`
 
 func createDbIfNotExists() {

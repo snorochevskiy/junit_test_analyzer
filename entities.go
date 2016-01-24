@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -25,6 +26,14 @@ type TestCaseEntity struct {
 	TestLaunchId int64  `column:"parent_launch_id"`
 
 	FailureInfo *FailureEntity
+}
+
+func (tce *TestCaseEntity) GetPackage() string {
+	return tce.ClassName[0:strings.LastIndex(tce.ClassName, ".")]
+}
+
+func (tce *TestCaseEntity) GetClassName() string {
+	return tce.ClassName[strings.LastIndex(tce.ClassName, ".")+1:]
 }
 
 func (tce *TestCaseEntity) String() string {

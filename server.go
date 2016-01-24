@@ -6,12 +6,17 @@ import (
 	"strconv"
 )
 
+type MessageDTO struct {
+	MessageText string
+}
+
 func startServer(port string) {
 	http.HandleFunc("/", serveRoot)
 	http.HandleFunc("/branch", serveLaunchesInBranch)
 	http.HandleFunc("/launch", serverLaunch)
 	http.HandleFunc("/test", serverTestCase)
 	http.HandleFunc("/diff", serveDiffLaunches)
+	http.HandleFunc("/delete-launch", serveDeleteLaunch)
 
 	log.Println("Listening...")
 	http.ListenAndServe(":"+port, nil)
@@ -29,7 +34,9 @@ func serveRoot(w http.ResponseWriter, r *http.Request) {
 
 func serveLaunchesInBranch(w http.ResponseWriter, r *http.Request) {
 
-	launches := DAO.GetAllLaunches()
+	branchName := r.URL.Query().Get("branch_name")
+
+	launches := DAO.GetAllLaunchesInBranch(branchName)
 
 	err := RenderInCommonTemplate(w, launches, "view_branch.html")
 	if err != nil {
@@ -107,4 +114,29 @@ func serveDiffLaunches(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
+}
+
+func serveDeleteLaunch(w http.ResponseWriter, r *http.Request) {
+	launchIdParam := r.URL.Query().Get("launch_id")
+	launchId, parseErr := strconv.Atoi(launchIdParam)
+	if parseErr != nil {
+		log.Println(parseErr)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	//TODO Redirect on this branch page
+
+	launchInfo := DAO.GetLaunchInfo(int64(launchId))
+	if launchInfo == nil {
+		http.Error(w, "Unable to find launch "+launchIdParam, http.StatusInternalServerError)
+		return
+	}
+
+	err := DAO.DeleteLaunch(int64(launchId))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/branch?branch_name="+launchInfo.Branch, http.StatusMovedPermanently)
 }

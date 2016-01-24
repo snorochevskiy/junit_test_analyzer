@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/xml"
 	"io/ioutil"
 	"log"
@@ -31,6 +33,9 @@ type TestCase struct {
 	ClassName string         `xml:"classname,attr"`
 	Skipped   *SkippedStatus `xml:"skipped"`
 	Failure   *FailureStatus `xml:"failure"`
+
+	Md5Hash        string
+	TestCaseStatus string
 }
 
 type SkippedStatus struct {
@@ -53,7 +58,7 @@ func ProcessAllResultsFiles(branch string, fullDirPath string) {
 		return
 	}
 
-	launchId := DAO.CreateTestsLaunch(branch)
+	allTests := make([]*TestCase, 0, 100)
 
 	for _, reportFile := range reportFiles {
 		if !reportFile.IsDir() && strings.HasSuffix(reportFile.Name(), ".xml") {
@@ -63,10 +68,26 @@ func ProcessAllResultsFiles(branch string, fullDirPath string) {
 				log.Println(suitePathErr)
 				continue
 			}
-			PersistSuite(launchId, suite)
 
+			for i := 0; i < len(suite.TestCases); i++ {
+
+				test := suite.TestCases[i]
+				if test.Failure != nil {
+					test.TestCaseStatus = TEST_CASE_STATUS_FAILED
+				} else if test.Skipped != nil {
+					test.TestCaseStatus = TEST_CASE_STATUS_SKIPPED
+				} else {
+					test.TestCaseStatus = TEST_CASE_STATUS_PASSED
+				}
+
+				md5Hash := md5.Sum([]byte(test.ClassName + "#" + test.Name))
+				test.Md5Hash = hex.EncodeToString(md5Hash[:])
+				allTests = append(allTests, &test)
+			}
 		}
 	}
+
+	DAO.PersistLaunch(branch, allTests)
 }
 
 func ParseTestSuite(fullFilePath string) (*TestSuite, error) {
@@ -86,10 +107,4 @@ func ParseTestSuite(fullFilePath string) (*TestSuite, error) {
 	}
 
 	return &suite, nil
-}
-
-func PersistSuite(launchId int64, suite *TestSuite) {
-	for _, testCase := range suite.TestCases {
-		DAO.AddTestCase(launchId, &testCase)
-	}
 }
