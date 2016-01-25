@@ -29,11 +29,13 @@ type PropertiesTag struct {
 }
 
 type TestCase struct {
-	Name      string         `xml:"name,attr"`
-	ClassName string         `xml:"classname,attr"`
-	Skipped   *SkippedStatus `xml:"skipped"`
-	Failure   *FailureStatus `xml:"failure"`
+	Name          string         `xml:"name,attr"`
+	FullClassName string         `xml:"classname,attr"`
+	Skipped       *SkippedStatus `xml:"skipped"`
+	Failure       *FailureStatus `xml:"failure"`
 
+	Package        string
+	ClassName      string
 	Md5Hash        string
 	TestCaseStatus string
 }
@@ -82,6 +84,9 @@ func ProcessAllResultsFiles(branch string, fullDirPath string) {
 
 				md5Hash := md5.Sum([]byte(test.ClassName + "#" + test.Name))
 				test.Md5Hash = hex.EncodeToString(md5Hash[:])
+
+				test.Package = test.FullClassName[0:strings.LastIndex(test.FullClassName, ".")]
+				test.ClassName = test.FullClassName[strings.LastIndex(test.FullClassName, ".")+1:]
 				allTests = append(allTests, &test)
 			}
 		}

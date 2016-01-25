@@ -3,11 +3,13 @@
 {{define "body"}}
 <h1>Tests</h1>
 
+<h3><a href="/packages?launch_id={{.LaunchId}}">Show by packages</a></h3>
+
 <table border="1">
 
-{{range $index, $val := .}}
+{{range $index, $val := .Tests}}
 	<tr>
-		<td>&nbsp;&nbsp;&nbsp;&nbsp;{{$val.GetPackage}}<br /><b>{{$val.GetClassName}}</b></td>
+		<td>&nbsp;&nbsp;&nbsp;&nbsp;{{$val.Package}}<br /><b>{{$val.ClassName}}</b></td>
 		<td><a href="/test?test_id={{$val.Id}}" >{{$val.Name}}</a></td>
 		<td>{{$val.Status}}</td>
 	</tr>

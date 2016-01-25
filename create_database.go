@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS test_cases (
 	test_case_id integer PRIMARY KEY AUTOINCREMENT,
 	md5_hash TEXT,
 	name TEXT,
+	package TEXT,
 	class_name TEXT,
 	status TEXT,
 	parent_launch_id INTEGER REFERENCES test_launches(launch_id) ON DELETE CASCADE

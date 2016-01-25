@@ -1,0 +1,20 @@
+{{define "title"}}View Package{{end}}
+
+{{define "body"}}
+<h1>{{.Package}}</h1>
+
+<h3><a href="/launch?launch_id={{.LaunchId}}">Parent tests launch</a></h3>
+
+<table border="1">
+
+{{range $index, $val := .Tests}}
+	<tr>
+		<td>{{$val.ClassName}}</td>
+		<td><a href="/test?test_id={{$val.Id}}" >{{$val.Name}}</a></td>
+		<td>{{$val.Status}}</td>
+	</tr>
+{{end}}
+
+<table>
+
+{{end}}

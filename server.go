@@ -14,6 +14,8 @@ func startServer(port string) {
 	http.HandleFunc("/", serveRoot)
 	http.HandleFunc("/branch", serveLaunchesInBranch)
 	http.HandleFunc("/launch", serverLaunch)
+	http.HandleFunc("/packages", serverLaunchPackages)
+	http.HandleFunc("/package", servePackage)
 	http.HandleFunc("/test", serverTestCase)
 	http.HandleFunc("/diff", serveDiffLaunches)
 	http.HandleFunc("/delete-launch", serveDeleteLaunch)
@@ -44,6 +46,11 @@ func serveLaunchesInBranch(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type ViewLaunchDTO struct {
+	LaunchId int
+	Tests    []*TestCaseEntity
+}
+
 func serverLaunch(w http.ResponseWriter, r *http.Request) {
 	launchIdParam := r.URL.Query().Get("launch_id")
 	launchId, parseErr := strconv.Atoi(launchIdParam)
@@ -55,7 +62,74 @@ func serverLaunch(w http.ResponseWriter, r *http.Request) {
 
 	testCases := DAO.GetAllTestsForLaunch(int64(launchId))
 
-	err := RenderInCommonTemplate(w, testCases, "view_launch.html")
+	var dto ViewLaunchDTO
+	dto.LaunchId = launchId
+	dto.Tests = testCases
+
+	err := RenderInCommonTemplate(w, dto, "view_launch.html")
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
+type ViewPackageDTO struct {
+	LaunchId int
+	Package  string
+	Tests    []*TestCaseEntity
+}
+
+func servePackage(w http.ResponseWriter, r *http.Request) {
+	launchIdParam := r.URL.Query().Get("launch_id")
+	launchId, parseErr := strconv.Atoi(launchIdParam)
+	if parseErr != nil {
+		log.Println(parseErr)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	packageParam := r.URL.Query().Get("package")
+	if packageParam == "" {
+		http.Error(w, "package should be specified", http.StatusInternalServerError)
+		return
+	}
+
+	testCases := DAO.GetAllTestsForPackage(int64(launchId), packageParam)
+
+	var dto ViewPackageDTO
+	dto.LaunchId = launchId
+	dto.Package = packageParam
+	dto.Tests = testCases
+
+	err := RenderInCommonTemplate(w, dto, "view_package.html")
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
+type PackagesDTO struct {
+	LaunchId int
+	Packages []*PackageEntity
+}
+
+func serverLaunchPackages(w http.ResponseWriter, r *http.Request) {
+	launchIdParam := r.URL.Query().Get("launch_id")
+	launchId, parseErr := strconv.Atoi(launchIdParam)
+	if parseErr != nil {
+		log.Println(parseErr)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	packages, err := DAO.GetPackagesForLaunch(int64(launchId))
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+
+	var dto PackagesDTO
+	dto.LaunchId = launchId
+	dto.Packages = packages
+
+	err = RenderInCommonTemplate(w, dto, "view_packages.html")
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}

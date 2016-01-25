@@ -1,0 +1,29 @@
+{{define "title"}}Packages{{end}}
+
+{{define "body"}}
+<h1>Packages</h1>
+
+<table border="1">
+<thead>
+	<tr>
+		<th>Package</th>
+		<th>Overal test number</th>
+		<th>Failed tests number</th>
+		<th>Passed tests number</th>
+		<th>Skipped tests number</th>
+	</tr>
+</thead>
+{{$launchId := .LaunchId}}
+{{range $index, $val := .Packages}}
+	<tr>
+		<td><a href="/package?launch_id={{$launchId}}&package={{$val.Package}}">{{$val.Package}}</a></td>
+		<td><center>{{$val.TestsNum}}</center></td>
+		<td><center>{{$val.FailedTestsNum}}</center></td>
+		<td><center>{{$val.PassedTestsNum}}</center></td>
+		<td><center>{{$val.SkippedTestsNum}}</center></td>
+	</tr>
+{{end}}
+
+<table>
+
+{{end}}

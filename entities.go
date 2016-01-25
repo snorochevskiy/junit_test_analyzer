@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 	"time"
 )
 
@@ -21,19 +20,12 @@ func (tle *TestLaunchEntity) String() string {
 type TestCaseEntity struct {
 	Id           int64  `column:"test_case_id"`
 	Name         string `column:"name"`
+	Package      string `column:"package"`
 	ClassName    string `column:"class_name"`
 	Status       string `column:"status"`
 	TestLaunchId int64  `column:"parent_launch_id"`
 
 	FailureInfo *FailureEntity
-}
-
-func (tce *TestCaseEntity) GetPackage() string {
-	return tce.ClassName[0:strings.LastIndex(tce.ClassName, ".")]
-}
-
-func (tce *TestCaseEntity) GetClassName() string {
-	return tce.ClassName[strings.LastIndex(tce.ClassName, ".")+1:]
 }
 
 func (tce *TestCaseEntity) String() string {
@@ -51,4 +43,12 @@ type FailureEntity struct {
 func (fe *FailureEntity) String() string {
 	return fmt.Sprintf("FailureEntity[Id=%v, Message=%v, Type=%v, Status=%v, Text=%v]",
 		fe.Id, fe.Message, fe.Type, fe.Text)
+}
+
+type PackageEntity struct {
+	Package         string `column:"package"`
+	TestsNum        int    `column:"tests_num"`
+	FailedTestsNum  int
+	PassedTestsNum  int
+	SkippedTestsNum int
 }
