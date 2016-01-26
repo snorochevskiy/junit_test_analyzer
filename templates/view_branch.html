@@ -5,9 +5,43 @@
 
 <ul>
 {{range $index, $val := .}}
-	<li><a href="launch?launch_id={{$val.Id}}">{{$val.CreateDate}} - FailedTestsNum: {{$val.FailedTestsNum}}</a> [<a href="/delete-launch?launch_id={{$val.Id}}">DELETE</a>]</li>
+	<li><a href="launch?launch_id={{$val.Id}}">#{{$val.Id}} - {{$val.CreateDate}} - FailedTestsNum: {{$val.FailedTestsNum}}</a> [<a href="/delete-launch?launch_id={{$val.Id}}">DELETE</a>] <button onclick="addToDiff({{$val.Id}})" >diff</button></li>
 {{end}}
 </ul>
+
+<script>
+var launchId1 = null;
+var launchId2 = null;
+
+function addToDiff(launchId) {
+	if (launchId1 == null) {
+		launchId1 = launchId;
+	} else if (launchId1 != null && launchId2 == null) {
+		if (launchId1 > launchId) {
+			launchId2 = launchId1;
+			launchId1 = launchId;
+		} else if (launchId1 != launchId) {
+			launchId2 = launchId
+		}
+	} else {
+		launchId1 = launchId;
+		launchId2 = null;
+	}
+	
+	if (launchId1 != null && launchId2 != null) {
+		containter = document.getElementById("diffLinkContainer");
+		containter.innerHTML = '<a href="/diff?launch_id1=' + launchId1 + '&launch_id2=' + launchId2 + '" >Show diff</a>';
+	}
+	document.getElementById("launchId1").innerHTML = ("" + launchId1);
+	document.getElementById("launchId2").innerHTML = ("" + launchId2);
+}
+</script>
+
+<p>
+Diff from <span id="launchId1">null</span> to <span id="launchId2">null</span>
+</p>
+<p id="diffLinkContainer">
+</p>
 
 <div id="diagramm" style="width : 600px; height: 384px;" />
 

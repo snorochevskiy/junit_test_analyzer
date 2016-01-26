@@ -6,10 +6,16 @@
 <h3><a href="/packages?launch_id={{.LaunchId}}">Show by packages</a></h3>
 
 <table border="1">
-
+<thead>
+	<tr>
+		<th>Test Class</th>
+		<th>Test Name</th>
+		<th>Status</th>
+	</tr>
+</thead>
 {{range $index, $val := .Tests}}
 	<tr>
-		<td>&nbsp;&nbsp;&nbsp;&nbsp;{{$val.Package}}<br /><b>{{$val.ClassName}}</b></td>
+		<td>&nbsp;&nbsp;&nbsp;&nbsp;<a href="/package?launch_id={{$val.TestLaunchId}}&package={{$val.Package}}">{{$val.Package}}</a><br /><b>{{$val.ClassName}}</b></td>
 		<td><a href="/test?test_id={{$val.Id}}" >{{$val.Name}}</a></td>
 		<td>{{$val.Status}}</td>
 	</tr>

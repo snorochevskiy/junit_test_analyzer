@@ -3,17 +3,28 @@
 {{define "body"}}
 <h1>Test Info</h1>
 
+<h3><a href="/launch?launch_id={{.TestLaunchId}}">Parent launch</a></h3>
 
-ID: {{.Id}} <br />
-Name: {{.Name}} <br />
-ClassName: {{.ClassName}} <br />
-Status: {{.Status}} <br />
+<table >
+<tr><td><b>ID:</b></td>			<td>{{.Id}}</td></tr>
+<tr><td><b>Name:</b></td>		<td>{{.Name}}</td></tr>
+<tr><td><b>ClassName:</b></td>	<td>{{.ClassName}}</td></tr>
+<tr><td><b>Package:</b></td>		<td>{{.Package}}</td></tr>
+<tr><td><b>Status:</b></td>		<td>{{.Status}}</td></tr>
+</table>
 
 {{if .FailureInfo}}
-<br />
-Message: {{.FailureInfo.Message}}<br />
-Type: {{.FailureInfo.Type}}<br />
-Text: <br />
+<h2>Failure info:</h2>
+<b>Type:</b> {{.FailureInfo.Type}}<br /><br />
+
+<!--
+<b>Message:</b>
+<pre>
+{{.FailureInfo.Message}}
+</pre>
+-->
+
+<b>Text:</b>
 <pre>
 {{.FailureInfo.Text}}
 </pre>

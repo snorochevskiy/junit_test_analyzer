@@ -3,7 +3,6 @@
 {{define "body"}}
 <h1>Branches</h1>
 
-<h2>Branches</h2>
 <ul>
 {{range $index, $val := .}}
 	<li><a href="/branch?branch_name={{$val}}" >{{$val}}</a></li>
