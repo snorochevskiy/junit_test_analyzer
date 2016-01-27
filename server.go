@@ -11,7 +11,10 @@ type MessageDTO struct {
 }
 
 func startServer(port string) {
-	http.HandleFunc("/", serveRoot)
+
+	fs := http.FileServer(http.Dir("static"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
+
 	http.HandleFunc("/branch", serveLaunchesInBranch)
 	http.HandleFunc("/launch", serverLaunch)
 	http.HandleFunc("/packages", serverLaunchPackages)
@@ -19,6 +22,7 @@ func startServer(port string) {
 	http.HandleFunc("/test", serverTestCase)
 	http.HandleFunc("/diff", serveDiffLaunches)
 	http.HandleFunc("/delete-launch", serveDeleteLaunch)
+	http.HandleFunc("/", serveRoot)
 
 	log.Println("Listening...")
 	http.ListenAndServe(":"+port, nil)
@@ -48,6 +52,8 @@ func serveLaunchesInBranch(w http.ResponseWriter, r *http.Request) {
 
 type ViewLaunchDTO struct {
 	LaunchId int
+	Label    string
+	Branch   string
 	Tests    []*TestCaseEntity
 }
 
@@ -61,9 +67,12 @@ func serverLaunch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	testCases := DAO.GetAllTestsForLaunch(int64(launchId))
+	launchInfo := DAO.GetLaunchInfo(int64(launchId))
 
 	var dto ViewLaunchDTO
 	dto.LaunchId = launchId
+	dto.Branch = launchInfo.Branch
+	dto.Label = launchInfo.Label
 	dto.Tests = testCases
 
 	err := RenderInCommonTemplate(w, dto, "view_launch.html")
@@ -153,11 +162,15 @@ func serverTestCase(w http.ResponseWriter, r *http.Request) {
 }
 
 type LaunchesDiffDTO struct {
-	LaunchId1   int
-	LaunchId2   int
-	NewTests    []*TestCaseEntity
-	FailedTests []*TestCaseEntity
-	FixedTests  []*TestCaseEntity
+	LaunchId1            int
+	LaunchId2            int
+	NewTests             []*TestCaseEntity
+	PassedToFailedTests  []*TestCaseEntity
+	PassedToSkippedTests []*TestCaseEntity
+	FailedToPassedTests  []*TestCaseEntity
+	FailedToSkippedTests []*TestCaseEntity
+	SkippedToFailedTests []*TestCaseEntity
+	SkippedToPassedTests []*TestCaseEntity
 }
 
 func serveDiffLaunches(w http.ResponseWriter, r *http.Request) {
@@ -181,8 +194,12 @@ func serveDiffLaunches(w http.ResponseWriter, r *http.Request) {
 	dto.LaunchId1 = launchId1
 	dto.LaunchId2 = launchId2
 	dto.NewTests = DAO.GetNewTestsInDiff(int64(launchId1), int64(launchId2))
-	dto.FailedTests = DAO.GetFailedTestsInDiff(int64(launchId1), int64(launchId2))
-	dto.FixedTests = DAO.GetFixedTestsInDiff(int64(launchId1), int64(launchId2))
+	dto.PassedToFailedTests = DAO.GetTestsFromStatus1ToStatus2(int64(launchId1), int64(launchId2), TEST_CASE_STATUS_PASSED, TEST_CASE_STATUS_FAILED)
+	dto.PassedToSkippedTests = DAO.GetTestsFromStatus1ToStatus2(int64(launchId1), int64(launchId2), TEST_CASE_STATUS_PASSED, TEST_CASE_STATUS_SKIPPED)
+	dto.FailedToPassedTests = DAO.GetTestsFromStatus1ToStatus2(int64(launchId1), int64(launchId2), TEST_CASE_STATUS_FAILED, TEST_CASE_STATUS_PASSED)
+	dto.FailedToSkippedTests = DAO.GetTestsFromStatus1ToStatus2(int64(launchId1), int64(launchId2), TEST_CASE_STATUS_FAILED, TEST_CASE_STATUS_SKIPPED)
+	dto.SkippedToFailedTests = DAO.GetTestsFromStatus1ToStatus2(int64(launchId1), int64(launchId2), TEST_CASE_STATUS_SKIPPED, TEST_CASE_STATUS_FAILED)
+	dto.SkippedToPassedTests = DAO.GetTestsFromStatus1ToStatus2(int64(launchId1), int64(launchId2), TEST_CASE_STATUS_SKIPPED, TEST_CASE_STATUS_PASSED)
 
 	err := RenderInCommonTemplate(w, dto, "view_launches_diff.html")
 	if err != nil {

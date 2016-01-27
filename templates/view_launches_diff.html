@@ -15,14 +15,42 @@
 
 <h2>PASSED -> FAILED</h2>
 <ul>
-{{range $index, $val := .FailedTests}}
+{{range $index, $val := .PassedToFailedTests}}
 	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
 {{end}}
 </ul>
 
 <h2>FAILED -> PASSED</h2>
 <ul>
-{{range $index, $val := .FixedTests}}
+{{range $index, $val := .FailedToPassedTests}}
+	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
+{{end}}
+</ul>
+
+<h2>PASSED -> SKIPPED</h2>
+<ul>
+{{range $index, $val := .PassedToSkippedTests}}
+	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
+{{end}}
+</ul>
+
+<h2>FAILED -> SKIPPED</h2>
+<ul>
+{{range $index, $val := .FailedToSkippedTests}}
+	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
+{{end}}
+</ul>
+
+<h2>SKIPPED -> FAILED</h2>
+<ul>
+{{range $index, $val := .SkippedToFailedTests}}
+	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
+{{end}}
+</ul>
+
+<h2>SKIPPED -> PASSED</h2>
+<ul>
+{{range $index, $val := .SkippedToPassedTests}}
 	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
 {{end}}
 </ul>

@@ -1,15 +1,29 @@
-// xmlparser project main.go
 package main
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"strings"
+	"time"
 )
 
 const PROMT = `
-Usage:
-program load-results <branch> <path-to-report-files>
-program start-server <port>
+To import JUnit reports to database:
+> jutra load-results <branch> <path-to-report-files> [--date=<from-fs | YYYY-MM-DD_HH:mm:ss>] [--label=<label>]
+Loads results from junit XML reports in specified folder
+	<branch>					- branch user in tests run (e.g. master, trunk)
+	<path-to-report-files>	- folder with XML junit reports
+	--date					- specify launch time
+		* from-fs				-tells to take launch time as folder last mod time
+		* YYYY-MM-DD_HH:mm:ss	- date in format YYYY-MM-DD_HH:mm:ss
+	--label					- Some label you want to sign launch with
+
+*Default launch time is NOW()
+
+To start jutra web application server:
+> jutra start-server <port>
+Starts web application on specified port
 `
 
 func main() {
@@ -32,18 +46,13 @@ func main() {
 }
 
 func StartServer() {
-	if len(os.Args) > 2 {
-		portStr := os.Args[2]
-		//		port, parseErr := strconv.Atoi(portStr)
-		//		if parseErr != nil || port < 1 || port > 65536 {
-		//			fmt.Println("Invalid port")
-		//			os.Exit(1)
-		//		}
-		startServer(portStr)
-	} else {
+	if len(os.Args) < 2 {
 		fmt.Println("No port specified")
+		os.Exit(1)
 	}
 
+	portStr := os.Args[2]
+	startServer(portStr)
 }
 
 func LoadTestResults() {
@@ -60,5 +69,26 @@ func LoadTestResults() {
 		os.Exit(1)
 	}
 
-	ProcessAllResultsFiles(branch, dir)
+	processor := JUnitResultsFolderProcessor{Branch: branch, FullDirPath: dir}
+
+	for i := 4; i < len(os.Args); i++ {
+		if strings.HasPrefix(os.Args[i], "--date=") {
+			timeStr := os.Args[i][strings.Index(os.Args[i], "=")+1:]
+			if timeStr == "from-fs" {
+				processor.TakeLaunchTimeFromDir = true
+			} else {
+				parsedTime, err := time.Parse("2006-01-02_15:04:05", timeStr)
+				if err != nil {
+					log.Fatalln(err)
+				}
+				processor.ExplicitlySetTime = parsedTime
+			}
+
+		} else if strings.HasPrefix(os.Args[i], "--label=") {
+			labelStr := os.Args[i][strings.Index(os.Args[i], "=")+1:]
+			processor.LaunchLabel = labelStr
+		}
+	}
+
+	processor.ProcessAllResultsFiles()
 }

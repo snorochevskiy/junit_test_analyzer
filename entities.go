@@ -8,6 +8,7 @@ import (
 type TestLaunchEntity struct {
 	Id             int64     `column:"launch_id"`
 	Branch         string    `column:"branch"`
+	Label          string    `column:"label"`
 	CreateDate     time.Time `column:"creation_date"`
 	FailedTestsNum int
 }
@@ -24,6 +25,7 @@ type TestCaseEntity struct {
 	ClassName    string `column:"class_name"`
 	Status       string `column:"status"`
 	TestLaunchId int64  `column:"parent_launch_id"`
+	//	Md5Hash      string `column:"md5_hash"`
 
 	FailureInfo *FailureEntity
 }

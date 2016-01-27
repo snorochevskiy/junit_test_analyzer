@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 )
 
 type TestSuite struct {
@@ -53,8 +54,30 @@ func (testcase *TestCase) IsSkipped() bool {
 	return testcase.Skipped != nil
 }
 
-func ProcessAllResultsFiles(branch string, fullDirPath string) {
-	reportFiles, reportFilesErr := ioutil.ReadDir(fullDirPath)
+type JUnitResultsFolderProcessor struct {
+	Branch                string
+	FullDirPath           string
+	LaunchLabel           string
+	TakeLaunchTimeFromDir bool
+	ExplicitlySetTime     time.Time
+}
+
+func (processor *JUnitResultsFolderProcessor) ProcessAllResultsFiles() {
+
+	// TODO validation: dir, etc.
+
+	var launchTime = time.Now()
+	if !processor.ExplicitlySetTime.IsZero() {
+		launchTime = processor.ExplicitlySetTime
+	} else if processor.TakeLaunchTimeFromDir {
+		dirInfo, err := os.Stat(processor.FullDirPath)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		launchTime = dirInfo.ModTime()
+	}
+
+	reportFiles, reportFilesErr := ioutil.ReadDir(processor.FullDirPath)
 	if reportFilesErr != nil {
 		log.Panic(reportFilesErr)
 		return
@@ -64,7 +87,7 @@ func ProcessAllResultsFiles(branch string, fullDirPath string) {
 
 	for _, reportFile := range reportFiles {
 		if !reportFile.IsDir() && strings.HasSuffix(reportFile.Name(), ".xml") {
-			fullReportFilePath := path.Join(fullDirPath, reportFile.Name())
+			fullReportFilePath := path.Join(processor.FullDirPath, reportFile.Name())
 			suite, suitePathErr := ParseTestSuite(fullReportFilePath)
 			if suitePathErr != nil {
 				log.Println(suitePathErr)
@@ -82,7 +105,7 @@ func ProcessAllResultsFiles(branch string, fullDirPath string) {
 					test.TestCaseStatus = TEST_CASE_STATUS_PASSED
 				}
 
-				md5Hash := md5.Sum([]byte(test.ClassName + "#" + test.Name))
+				md5Hash := md5.Sum([]byte(test.FullClassName + "#" + test.Name))
 				test.Md5Hash = hex.EncodeToString(md5Hash[:])
 
 				test.Package = test.FullClassName[0:strings.LastIndex(test.FullClassName, ".")]
@@ -92,7 +115,7 @@ func ProcessAllResultsFiles(branch string, fullDirPath string) {
 		}
 	}
 
-	DAO.PersistLaunch(branch, allTests)
+	DAO.PersistLaunch(processor.Branch, allTests, launchTime, processor.LaunchLabel)
 }
 
 func ParseTestSuite(fullFilePath string) (*TestSuite, error) {

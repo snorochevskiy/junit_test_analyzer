@@ -3,31 +3,47 @@
 {{define "body"}}
 <h1>Test Launches</h1>
 
-<ul>
+<table class="pure-table" >
+	<thead>
+		<tr>
+			<th>No</th>
+			<th>Launch No.</th>
+			<th>Tests launch</th>
+			<th>Label</th>
+			<th>Failed Tets Num</th>
+			<th>ACTIONS</th>
+			<th colspan="2">Launches diff</th>
+		</tr>
+	</thead>
 {{range $index, $val := .}}
-	<li><a href="launch?launch_id={{$val.Id}}">#{{$val.Id}} - {{$val.CreateDate}} - FailedTestsNum: {{$val.FailedTestsNum}}</a> [<a href="/delete-launch?launch_id={{$val.Id}}">DELETE</a>] <button onclick="addToDiff({{$val.Id}})" >diff</button></li>
+	<tr>
+		<td>{{$index}}</td>
+		<td>{{$val.Id}}</td>
+		<td><a href="launch?launch_id={{$val.Id}}">{{$val.CreateDate.Format "2006-01-02 15:04:05"}}</a></td>
+		<td>{{$val.Label}}</td>
+		<td>{{$val.FailedTestsNum}}</td>
+		<td>[<a href="/delete-launch?launch_id={{$val.Id}}">DELETE</a>]</td>
+		<td><button onclick="leftInDiff({{$val.Id}})" >from</button></td>
+		<td><button onclick="rightInDiff({{$val.Id}})" >&nbsp;&nbsp;to&nbsp;&nbsp;</button></td>
+	</tr>
 {{end}}
-</ul>
+</table>
 
 <script>
 var launchId1 = null;
 var launchId2 = null;
 
-function addToDiff(launchId) {
-	if (launchId1 == null) {
-		launchId1 = launchId;
-	} else if (launchId1 != null && launchId2 == null) {
-		if (launchId1 > launchId) {
-			launchId2 = launchId1;
-			launchId1 = launchId;
-		} else if (launchId1 != launchId) {
-			launchId2 = launchId
-		}
-	} else {
-		launchId1 = launchId;
-		launchId2 = null;
-	}
-	
+function leftInDiff(launchId) {
+	launchId1 = launchId;
+	updateHtml();
+}
+
+function rightInDiff(launchId) {
+	launchId2 = launchId;
+	updateHtml();
+}
+
+function updateHtml() {
 	if (launchId1 != null && launchId2 != null) {
 		containter = document.getElementById("diffLinkContainer");
 		containter.innerHTML = '<a href="/diff?launch_id1=' + launchId1 + '&launch_id2=' + launchId2 + '" >Show diff</a>';
@@ -38,9 +54,7 @@ function addToDiff(launchId) {
 </script>
 
 <p>
-Diff from <span id="launchId1">null</span> to <span id="launchId2">null</span>
-</p>
-<p id="diffLinkContainer">
+Diff from <span id="launchId1">null</span> to <span id="launchId2">null</span> : <span id="diffLinkContainer"></span>
 </p>
 
 <div id="diagramm" style="width : 600px; height: 384px;" />
@@ -50,21 +64,32 @@ Diff from <span id="launchId1">null</span> to <span id="launchId2">null</span>
 <script>
 (function basic(container) {
 
-    var d1 = [
+	var d1 = [
 {{range $index, $val := .}}
-		[{{$val.Id}}, {{$val.FailedTestsNum}}],
+		[{{$index}}, {{$val.FailedTestsNum}}],
 {{end}}
-    ]
+	]
 
-    graph = Flotr.draw(container, [d1], {
-        xaxis: {
-            minorTickFreq: 4,
-        },
-
-        grid: {
-            minorVerticalLines: true
-        }
-    });
+	graph = Flotr.draw(container, [d1], {
+		title: "Failed tests progression",
+		parseFloat: false,
+		xaxis: {
+			title: "Launch number in list",
+			minorTickFreq: 4,
+			tickDecimals:0
+		},
+		yaxis: {
+			tickDecimals:0,
+			title: "Number of failed tests",
+			titleAngle: 90
+		},
+		grid: {
+			minorVerticalLines: true
+		},
+		mouse: {
+			track: true
+		}
+	});
 })(document.getElementById("diagramm"));
 </script>
 
