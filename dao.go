@@ -270,7 +270,7 @@ func (*DaoService) GetNumberOfFailedTestInLaunch(launchId int64) int {
 	return *num
 }
 
-func (*DaoService) GetNewTestsInDiff(launchId1 int64, launchId2 int64) []*TestCaseEntity {
+func (*DaoService) GetAddedTestsInDiff(launchId1 int64, launchId2 int64) []*TestCaseEntity {
 	newTestsRows, newTestRowsErr := ExecuteSelect(
 		"SELECT test_case_id, name, package, class_name, status, parent_launch_id FROM test_cases WHERE md5_hash IN ( "+
 			"SELECT md5_hash FROM test_cases WHERE parent_launch_id = ? EXCEPT "+

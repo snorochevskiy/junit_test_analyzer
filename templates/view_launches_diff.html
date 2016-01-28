@@ -8,7 +8,14 @@
 
 <h2>Added tests</h2>
 <ul>
-{{range $index, $val := .NewTests}}
+{{range $index, $val := .AddedTests}}
+	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
+{{end}}
+</ul>
+
+<h2>Removed tests</h2>
+<ul>
+{{range $index, $val := .RemovedTests}}
 	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
 {{end}}
 </ul>

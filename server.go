@@ -6,10 +6,6 @@ import (
 	"strconv"
 )
 
-type MessageDTO struct {
-	MessageText string
-}
-
 func startServer(port string) {
 
 	fs := http.FileServer(http.Dir("static"))
@@ -164,7 +160,8 @@ func serverTestCase(w http.ResponseWriter, r *http.Request) {
 type LaunchesDiffDTO struct {
 	LaunchId1            int
 	LaunchId2            int
-	NewTests             []*TestCaseEntity
+	AddedTests           []*TestCaseEntity
+	RemovedTests         []*TestCaseEntity
 	PassedToFailedTests  []*TestCaseEntity
 	PassedToSkippedTests []*TestCaseEntity
 	FailedToPassedTests  []*TestCaseEntity
@@ -193,7 +190,8 @@ func serveDiffLaunches(w http.ResponseWriter, r *http.Request) {
 	var dto LaunchesDiffDTO
 	dto.LaunchId1 = launchId1
 	dto.LaunchId2 = launchId2
-	dto.NewTests = DAO.GetNewTestsInDiff(int64(launchId1), int64(launchId2))
+	dto.AddedTests = DAO.GetAddedTestsInDiff(int64(launchId1), int64(launchId2))
+	dto.RemovedTests = DAO.GetAddedTestsInDiff(int64(launchId2), int64(launchId1))
 	dto.PassedToFailedTests = DAO.GetTestsFromStatus1ToStatus2(int64(launchId1), int64(launchId2), TEST_CASE_STATUS_PASSED, TEST_CASE_STATUS_FAILED)
 	dto.PassedToSkippedTests = DAO.GetTestsFromStatus1ToStatus2(int64(launchId1), int64(launchId2), TEST_CASE_STATUS_PASSED, TEST_CASE_STATUS_SKIPPED)
 	dto.FailedToPassedTests = DAO.GetTestsFromStatus1ToStatus2(int64(launchId1), int64(launchId2), TEST_CASE_STATUS_FAILED, TEST_CASE_STATUS_PASSED)
@@ -215,7 +213,6 @@ func serveDeleteLaunch(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
-	//TODO Redirect on this branch page
 
 	launchInfo := DAO.GetLaunchInfo(int64(launchId))
 	if launchInfo == nil {

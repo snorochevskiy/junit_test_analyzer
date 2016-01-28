@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -27,11 +25,6 @@ To start jutra web application server:
 > jutra start-server <port> [--daemon]
 Starts web application on specified port
 `
-
-const (
-	envVarName  = "_JUTRA_DAEMON"
-	envVarValue = "1"
-)
 
 func main() {
 	if len(os.Args) < 2 {
@@ -105,23 +98,4 @@ func LoadTestResults() {
 	}
 
 	processor.ProcessAllResultsFiles()
-}
-
-func Reborn() (err error) {
-	if os.Getenv(envVarName) != envVarValue {
-		var path string
-		if path, err = filepath.Abs(os.Args[0]); err != nil {
-			log.Fatalln(err)
-			return
-		}
-		cmd := exec.Command(path, os.Args[1:]...)
-		envVar := fmt.Sprintf("%s=%s", envVarName, envVarValue)
-		cmd.Env = append(os.Environ(), envVar)
-		if err = cmd.Start(); err != nil {
-			log.Fatalln(err)
-			return
-		}
-		os.Exit(0)
-	}
-	return
 }
