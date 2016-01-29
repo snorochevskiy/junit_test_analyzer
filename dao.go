@@ -50,7 +50,7 @@ func (*DaoService) PersistLaunch(branch string, testCases []*TestCase, launchTim
 	}
 
 	for _, test := range testCases {
-		res, err := testStmt.Exec(test.Name, test.Package, test.ClassName, test.Md5Hash, test.TestCaseStatus, launchId)
+		res, err := testStmt.Exec(test.Name, test.Package, test.ClassName, test.Md5Hash, test.Status, launchId)
 		if err != nil {
 			transaction.Rollback()
 			return err

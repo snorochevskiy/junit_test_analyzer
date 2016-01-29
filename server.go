@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func startServer(port string) {
+func StartServer(port string) {
 
 	fs := http.FileServer(http.Dir("static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
@@ -44,17 +44,6 @@ func serveLaunchesInBranch(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
-}
-
-type ViewLaunchDTO struct {
-	LaunchId int
-	Label    string
-	Branch   string
-	Tests    []*TestCaseEntity
-
-	FailedTestsNum  int
-	PassedTestsNum  int
-	SkippedTestsNum int
 }
 
 func TestsWithStatusNum(tests []*TestCaseEntity, status string) int {
@@ -95,12 +84,6 @@ func serverLaunch(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type ViewPackageDTO struct {
-	LaunchId int
-	Package  string
-	Tests    []*TestCaseEntity
-}
-
 func servePackage(w http.ResponseWriter, r *http.Request) {
 	launchIdParam := r.URL.Query().Get("launch_id")
 	launchId, parseErr := strconv.Atoi(launchIdParam)
@@ -127,11 +110,6 @@ func servePackage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
-}
-
-type PackagesDTO struct {
-	LaunchId int
-	Packages []*PackageEntity
 }
 
 func serverLaunchPackages(w http.ResponseWriter, r *http.Request) {
@@ -173,19 +151,6 @@ func serverTestCase(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
-}
-
-type LaunchesDiffDTO struct {
-	LaunchId1            int
-	LaunchId2            int
-	AddedTests           []*TestCaseEntity
-	RemovedTests         []*TestCaseEntity
-	PassedToFailedTests  []*TestCaseEntity
-	PassedToSkippedTests []*TestCaseEntity
-	FailedToPassedTests  []*TestCaseEntity
-	FailedToSkippedTests []*TestCaseEntity
-	SkippedToFailedTests []*TestCaseEntity
-	SkippedToPassedTests []*TestCaseEntity
 }
 
 func serveDiffLaunches(w http.ResponseWriter, r *http.Request) {

@@ -35,10 +35,10 @@ type TestCase struct {
 	Skipped       *SkippedStatus `xml:"skipped"`
 	Failure       *FailureStatus `xml:"failure"`
 
-	Package        string
-	ClassName      string
-	Md5Hash        string
-	TestCaseStatus string
+	Package   string
+	ClassName string
+	Md5Hash   string
+	Status    string
 }
 
 type SkippedStatus struct {
@@ -54,30 +54,11 @@ func (testcase *TestCase) IsSkipped() bool {
 	return testcase.Skipped != nil
 }
 
-type JUnitResultsFolderProcessor struct {
-	Branch                string
-	FullDirPath           string
-	LaunchLabel           string
-	TakeLaunchTimeFromDir bool
-	ExplicitlySetTime     time.Time
-}
+func ProcessAllResultsFiles(importConfig *ImportConfiguration) {
 
-func (processor *JUnitResultsFolderProcessor) ProcessAllResultsFiles() {
+	var launchTime = determineLaunchTime(importConfig)
 
-	// TODO validation: dir, etc.
-
-	var launchTime = time.Now()
-	if !processor.ExplicitlySetTime.IsZero() {
-		launchTime = processor.ExplicitlySetTime
-	} else if processor.TakeLaunchTimeFromDir {
-		dirInfo, err := os.Stat(processor.FullDirPath)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		launchTime = dirInfo.ModTime()
-	}
-
-	reportFiles, reportFilesErr := ioutil.ReadDir(processor.FullDirPath)
+	reportFiles, reportFilesErr := ioutil.ReadDir(importConfig.FullDirPath)
 	if reportFilesErr != nil {
 		log.Panic(reportFilesErr)
 		return
@@ -87,7 +68,7 @@ func (processor *JUnitResultsFolderProcessor) ProcessAllResultsFiles() {
 
 	for _, reportFile := range reportFiles {
 		if !reportFile.IsDir() && strings.HasSuffix(reportFile.Name(), ".xml") {
-			fullReportFilePath := path.Join(processor.FullDirPath, reportFile.Name())
+			fullReportFilePath := path.Join(importConfig.FullDirPath, reportFile.Name())
 			suite, suitePathErr := ParseTestSuite(fullReportFilePath)
 			if suitePathErr != nil {
 				log.Println(suitePathErr)
@@ -97,28 +78,46 @@ func (processor *JUnitResultsFolderProcessor) ProcessAllResultsFiles() {
 			for i := 0; i < len(suite.TestCases); i++ {
 
 				test := suite.TestCases[i]
-				if test.Failure != nil {
-					test.TestCaseStatus = TEST_CASE_STATUS_FAILED
-				} else if test.Skipped != nil {
-					test.TestCaseStatus = TEST_CASE_STATUS_SKIPPED
-				} else {
-					test.TestCaseStatus = TEST_CASE_STATUS_PASSED
-				}
-
-				md5Hash := md5.Sum([]byte(test.FullClassName + "#" + test.Name))
-				test.Md5Hash = hex.EncodeToString(md5Hash[:])
-
-				test.Package = test.FullClassName[0:strings.LastIndex(test.FullClassName, ".")]
-				test.ClassName = test.FullClassName[strings.LastIndex(test.FullClassName, ".")+1:]
+				PrepareTestCase(&test)
 				allTests = append(allTests, &test)
 			}
 		}
 	}
 
-	DAO.PersistLaunch(processor.Branch, allTests, launchTime, processor.LaunchLabel)
+	DAO.PersistLaunch(importConfig.Branch, allTests, launchTime, importConfig.LaunchLabel)
 }
 
-func ParseTestSuite(fullFilePath string) (*TestSuite, error) {
+func determineLaunchTime(importConfig *ImportConfiguration) time.Time {
+	var launchTime = time.Now()
+	if !importConfig.ExplicitlySetTime.IsZero() {
+		launchTime = importConfig.ExplicitlySetTime
+	} else if importConfig.TakeLaunchTimeFromDir {
+		dirInfo, err := os.Stat(importConfig.FullDirPath)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		launchTime = dirInfo.ModTime()
+	}
+	return launchTime
+}
+
+func prepareTestCase(tc *TestCase) {
+	md5Hash := md5.Sum([]byte(tc.FullClassName + "#" + tc.Name))
+	tc.Md5Hash = hex.EncodeToString(md5Hash[:])
+
+	tc.Package = tc.FullClassName[0:strings.LastIndex(tc.FullClassName, ".")]
+	tc.ClassName = tc.FullClassName[strings.LastIndex(tc.FullClassName, ".")+1:]
+
+	if tc.Failure != nil {
+		tc.Status = TEST_CASE_STATUS_FAILED
+	} else if tc.Skipped != nil {
+		tc.Status = TEST_CASE_STATUS_SKIPPED
+	} else {
+		tc.Status = TEST_CASE_STATUS_PASSED
+	}
+}
+
+func parseTestSuite(fullFilePath string) (*TestSuite, error) {
 	xmlFile, err := os.Open(fullFilePath)
 	if err != nil {
 		log.Println("Error opening file:", err)
