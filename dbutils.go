@@ -4,18 +4,29 @@ import (
 	"database/sql"
 	"github.com/mattn/go-sqlite3"
 	"log"
+	"os"
+	"path/filepath"
 )
 
-const DB_NAME = "file:persist.db?cache=shared&mode=rwc&_busy_timeout=50000000"
+var DB_CONNECTION_URL = ConstructDbUrl()
 
 var DB_DRIVER string
+
+func ConstructDbUrl() string {
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatalln(err)
+	}
+	fileName := filepath.Join(dir, "persist.db")
+	return "file:" + fileName + "?cache=shared&mode=rwc&_busy_timeout=50000000"
+}
 
 func initializeDriver() {
 	sql.Register(DB_DRIVER, &sqlite3.SQLiteDriver{})
 }
 
 func OpenDbConnection() (*sql.DB, error) {
-	return sql.Open(DB_DRIVER, DB_NAME)
+	return sql.Open(DB_DRIVER, DB_CONNECTION_URL)
 }
 
 func ExecuteSelect(query string, args ...interface{}) (*sql.Rows, error) {
