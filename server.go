@@ -51,6 +51,20 @@ type ViewLaunchDTO struct {
 	Label    string
 	Branch   string
 	Tests    []*TestCaseEntity
+
+	FailedTestsNum  int
+	PassedTestsNum  int
+	SkippedTestsNum int
+}
+
+func TestsWithStatusNum(tests []*TestCaseEntity, status string) int {
+	counter := 0
+	for i := 0; i < len(tests); i++ {
+		if tests[i].Status == status {
+			counter++
+		}
+	}
+	return counter
 }
 
 func serverLaunch(w http.ResponseWriter, r *http.Request) {
@@ -70,6 +84,10 @@ func serverLaunch(w http.ResponseWriter, r *http.Request) {
 	dto.Branch = launchInfo.Branch
 	dto.Label = launchInfo.Label
 	dto.Tests = testCases
+
+	dto.FailedTestsNum = TestsWithStatusNum(dto.Tests, TEST_CASE_STATUS_FAILED)
+	dto.PassedTestsNum = TestsWithStatusNum(dto.Tests, TEST_CASE_STATUS_PASSED)
+	dto.SkippedTestsNum = TestsWithStatusNum(dto.Tests, TEST_CASE_STATUS_SKIPPED)
 
 	err := RenderInCommonTemplate(w, dto, "view_launch.html")
 	if err != nil {
