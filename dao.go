@@ -275,7 +275,7 @@ func (*DaoService) GetAddedTestsInDiff(launchId1 int64, launchId2 int64) []*Test
 		"SELECT test_case_id, name, package, class_name, status, parent_launch_id FROM test_cases WHERE parent_launch_id = ? AND md5_hash IN ( "+
 			"SELECT md5_hash FROM test_cases WHERE parent_launch_id = ? EXCEPT "+
 			"SELECT md5_hash FROM test_cases WHERE parent_launch_id = ?"+
-			" ) ORDER BY status", launchId1, launchId2, launchId1)
+			" ) ORDER BY status", launchId2, launchId2, launchId1)
 	if newTestRowsErr != nil {
 		log.Println(newTestRowsErr)
 		return nil
