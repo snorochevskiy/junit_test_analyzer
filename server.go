@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -9,7 +10,7 @@ import (
 func StartServer(port string) {
 
 	fs := http.FileServer(http.Dir("static"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
+	http.Handle("/static/", maxAgeHandler(3600, http.StripPrefix("/static/", fs)))
 
 	http.HandleFunc("/branch", serveLaunchesInBranch)
 	http.HandleFunc("/launch", serverLaunch)
@@ -22,6 +23,13 @@ func StartServer(port string) {
 
 	log.Println("Listening...")
 	http.ListenAndServe(":"+port, nil)
+}
+
+func maxAgeHandler(seconds int, h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Cache-Control", fmt.Sprintf("max-age=%d, public, must-revalidate, proxy-revalidate", seconds))
+		h.ServeHTTP(w, r)
+	})
 }
 
 func serveRoot(w http.ResponseWriter, r *http.Request) {

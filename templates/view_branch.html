@@ -22,7 +22,9 @@
 		<td><a href="launch?launch_id={{$val.Id}}">{{$val.CreateDate.Format "2006-01-02 15:04:05"}}</a></td>
 		<td>{{$val.Label}}</td>
 		<td>{{$val.FailedTestsNum}}</td>
-		<td>[<a href="/delete-launch?launch_id={{$val.Id}}">DELETE</a>]</td>
+		<td>
+			<a href="/delete-launch?launch_id={{$val.Id}}"><i class="fi-x red"></i></a>
+		</td>
 		<td><button onclick="leftInDiff({{$val.Id}})" >from</button></td>
 		<td><button onclick="rightInDiff({{$val.Id}})" >&nbsp;&nbsp;to&nbsp;&nbsp;</button></td>
 	</tr>

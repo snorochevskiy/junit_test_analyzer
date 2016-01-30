@@ -1,8 +1,21 @@
+#pageContainer {
+	padding-left: 10px;
+	padding-right:10px;
+}
+
 a {
 	text-decoration: none;
 }
 
 table.jutra-table td {
+	padding: 2px;
+}
+
+table.jutra-table th {
+	padding: 2px;
+}
+
+table.jutra-info-table td {
 	padding: 2px;
 }
 
@@ -16,4 +29,8 @@ tr.passed {
 
 tr.skipped {
 	background-color: #EFEFFB;
+}
+
+.red {
+	color: red;
 }
