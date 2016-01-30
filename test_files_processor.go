@@ -69,7 +69,7 @@ func ProcessAllResultsFiles(importConfig *ImportConfiguration) {
 	for _, reportFile := range reportFiles {
 		if !reportFile.IsDir() && strings.HasSuffix(reportFile.Name(), ".xml") {
 			fullReportFilePath := path.Join(importConfig.FullDirPath, reportFile.Name())
-			suite, suitePathErr := ParseTestSuite(fullReportFilePath)
+			suite, suitePathErr := parseTestSuite(fullReportFilePath)
 			if suitePathErr != nil {
 				log.Println(suitePathErr)
 				continue
@@ -78,7 +78,7 @@ func ProcessAllResultsFiles(importConfig *ImportConfiguration) {
 			for i := 0; i < len(suite.TestCases); i++ {
 
 				test := suite.TestCases[i]
-				PrepareTestCase(&test)
+				prepareTestCase(&test)
 				allTests = append(allTests, &test)
 			}
 		}
