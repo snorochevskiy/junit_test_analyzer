@@ -4,6 +4,7 @@ import ()
 
 func main() {
 	initializeDriver()
+	createDbIfNotExists()
 
 	if CLI.IsServerMode() {
 		serverConfig := CLI.ParseServerConfiguration()

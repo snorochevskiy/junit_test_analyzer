@@ -54,3 +54,12 @@ type PackageEntity struct {
 	PassedTestsNum  int
 	SkippedTestsNum int
 }
+
+type UserEntity struct {
+	UserId    int64  `column:"user_id"`
+	Login     string `column:"login"`
+	Password  string `column:"password"`
+	IsActive  bool   `column:"is_active"`
+	FirstName string `column:"first_name"`
+	LastName  string `column:"last_name"`
+}

@@ -34,3 +34,7 @@ tr.skipped {
 .red {
 	color: red;
 }
+
+.right {
+	float: right;
+}

@@ -12,6 +12,9 @@ func StartServer(port string) {
 	fs := http.FileServer(http.Dir("static"))
 	http.Handle("/static/", maxAgeHandler(3600, http.StripPrefix("/static/", fs)))
 
+	http.HandleFunc("/login", handleLogin)
+	http.HandleFunc("/logout", handleLogout)
+
 	http.HandleFunc("/branch", serveLaunchesInBranch)
 	http.HandleFunc("/launch", serverLaunch)
 	http.HandleFunc("/packages", serverLaunchPackages)
@@ -197,6 +200,12 @@ func serveDiffLaunches(w http.ResponseWriter, r *http.Request) {
 }
 
 func serveDeleteLaunch(w http.ResponseWriter, r *http.Request) {
+	session := SessionManager.GetSessionForRequest(r)
+	if session == nil || session.User == nil {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
+
 	launchIdParam := r.URL.Query().Get("launch_id")
 	launchId, parseErr := strconv.Atoi(launchIdParam)
 	if parseErr != nil {
@@ -218,4 +227,51 @@ func serveDeleteLaunch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/branch?branch_name="+launchInfo.Branch, http.StatusMovedPermanently)
+}
+
+func handleLogin(w http.ResponseWriter, r *http.Request) {
+
+	session := SessionManager.GetSessionForRequest(r)
+	if session != nil {
+		http.Redirect(w, r, "/", http.StatusFound)
+		return
+	}
+
+	if r.Method != "POST" {
+		if err := RenderInCommonTemplate(w, nil, "login.html"); err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	login := r.FormValue("login")
+	password := r.FormValue("password")
+	userInfo := DAO.FindUser(login, password)
+
+	errMsg := ""
+	if login == "" {
+
+	} else if userInfo == nil {
+		errMsg = "Can't find user with login " + login
+	} else if userInfo.Password != password {
+		errMsg = "Wrong password"
+	}
+
+	if login == "" || errMsg != "" {
+
+		if err := RenderInCommonTemplate(w, userInfo, "login.html"); err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+
+	} else {
+		SessionManager.InitSession(w, userInfo)
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Pragma", "no-cache")
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
+}
+
+func handleLogout(w http.ResponseWriter, r *http.Request) {
+	SessionManager.ClearSession(r, w)
+	http.Redirect(w, r, "/login", http.StatusFound)
 }

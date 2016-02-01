@@ -319,3 +319,22 @@ func (*DaoService) DeleteLaunch(launchId int64) error {
 	}
 	return nil
 }
+
+func (*DaoService) FindUser(login string, password string) *UserEntity {
+	rows, err := ExecuteSelect(
+		"SELECT user_id, login, password, is_active, first_name, last_name FROM users WHERE login = ? AND password = ?", login, password)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return nil
+	}
+
+	userEntity := new(UserEntity)
+	ScanStruct(rows, userEntity)
+
+	return userEntity
+}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 )
 
@@ -40,6 +41,16 @@ CREATE TABLE IF NOT EXISTS test_case_failures (
 	parent_test_case_id INTEGER REFERENCES test_cases(test_case_id) ON DELETE CASCADE 
 )`
 
+const DDL_USERS = `
+CREATE TABLE IF NOT EXISTS users (
+	user_id integer PRIMARY KEY AUTOINCREMENT,
+	login TEXT UNIQUE NOT NULL,
+	password TEXT,
+	is_active BOOLEAN DEFAULT 0,
+	first_name TEXT NULL,
+	last_name TEXT NULL
+)`
+
 func createDbIfNotExists() {
 
 	database, operErr := OpenDbConnection()
@@ -49,22 +60,41 @@ func createDbIfNotExists() {
 	defer database.Close()
 
 	if pingErr := database.Ping(); pingErr != nil {
-		log.Println("Failed to keep connection alive")
+		log.Fatal("Failed to keep connection alive")
 	}
 
-	_, ddlTestsLaunchesErr := database.Exec(DDL_TESTS_LAUNCHES)
-	if ddlTestsLaunchesErr != nil {
-		log.Fatal(ddlTestsLaunchesErr)
+	if _, err := database.Exec(DDL_TESTS_LAUNCHES); err != nil {
+		log.Fatal(err)
 	}
 
-	_, ddlTestCasesErr := database.Exec(DDL_TEST_CASES)
-	if ddlTestCasesErr != nil {
-		log.Fatal(ddlTestCasesErr)
+	if _, err := database.Exec(DDL_TEST_CASES); err != nil {
+		log.Fatal(err)
 	}
 
-	_, ddlTestCaseFailuresErr := database.Exec(DDL_TEST_CASE_FAILURE)
-	if ddlTestCaseFailuresErr != nil {
-		log.Fatal(ddlTestCaseFailuresErr)
+	if _, err := database.Exec(DDL_TEST_CASE_FAILURE); err != nil {
+		log.Fatal(err)
 	}
 
+	if _, err := database.Exec(DDL_USERS); err != nil {
+		log.Fatal(err)
+	}
+	initUsers(database)
+
+}
+
+func initUsers(database *sql.DB) {
+	row := database.QueryRow("SELECT count(*) FROM users")
+
+	var numberOfUsers int
+	if err := row.Scan(&numberOfUsers); err != nil {
+		log.Fatal(err)
+	}
+
+	if numberOfUsers > 0 {
+		return
+	}
+
+	if _, err := database.Exec("INSERT INTO users(login, password, is_active) VALUES('admin', 'admin', 1)"); err != nil {
+		log.Fatal(err)
+	}
 }
