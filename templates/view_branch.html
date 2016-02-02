@@ -7,7 +7,7 @@
 <script src="/static/js/jutra_plot.js"></script>
 <script>
 	var canv = document.getElementById("launchesPlot");
-	canv.width = window.innerWidth * 0.9;
+	canv.width = window.innerWidth * 0.95;
 	var dots = [
 {{range $index, $val := .}}
 		{x: {{$val.CreateDate.Unix}}, y: {{$val.FailedTestsNum}}, displayX: {{$val.CreateDate.Format "06-01-02 15:04"}} },

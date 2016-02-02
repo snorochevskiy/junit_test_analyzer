@@ -1,7 +1,23 @@
+
+//+======================================================+
+//|                                                      |
+//|    (plotX0, plotY0)                                  |
+//|      |AXIS_GAP                                       |
+//|      |*                                  PLOT_X_GAP  |
+//|      | *                                             |
+//|      |  *                                            |
+//|      |    *           ***                            |
+//|      |      *        *    *               ****       |
+//|      |        *     *      ***************           |
+//|      |          ***                     AXIS_GAP     |
+//|      +------------------------------------------     |
+//|     0 TEXT_INDENT              PLOT_Y_GAP            |
+//+======================================================+
+
 function DrawChart(canv, data) {
 	var AXIS_GAP = 20;
-	var PLOT_X_GAP = 50;
-	var PLOT_Y_GAP = 50;
+	var PLOT_X_GAP = 20;
+	var PLOT_Y_GAP = 20;
 	var TEXT_INDENT = 10;
 
 	var plotX0 = 20;
