@@ -3,6 +3,19 @@
 {{define "body"}}
 <h1>Test Launches</h1>
 
+<canvas style="margin:10px;" height="400" id='launchesPlot'>Update your browser</canvas>
+<script src="/static/js/jutra_plot.js"></script>
+<script>
+	var canv = document.getElementById("launchesPlot");
+	canv.width = window.innerWidth * 0.9;
+	var dots = [
+{{range $index, $val := .}}
+		{x: {{$val.CreateDate.Unix}}, y: {{$val.FailedTestsNum}}, displayX: {{$val.CreateDate.Format "06-01-02 15:04"}} },
+{{end}}
+		];
+	DrawChart(canv, dots);
+</script>
+
 <table class="pure-table" >
 	<thead>
 		<tr>
@@ -58,42 +71,5 @@ function updateHtml() {
 <p>
 Diff from <span id="launchId1">null</span> to <span id="launchId2">null</span> : <span id="diffLinkContainer"></span>
 </p>
-
-<div id="diagramm" style="width : 600px; height: 384px;" />
-
-<script src="http://humblesoftware.com/static/js/hsd-flotr2.js?d3fa1"></script>
-
-<script>
-(function basic(container) {
-
-	var d1 = [
-{{range $index, $val := .}}
-		[{{$index}}, {{$val.FailedTestsNum}}],
-{{end}}
-	]
-
-	graph = Flotr.draw(container, [d1], {
-		title: "Failed tests progression",
-		parseFloat: false,
-		xaxis: {
-			title: "Launch number in list",
-			minorTickFreq: 4,
-			tickDecimals:0
-		},
-		yaxis: {
-			tickDecimals:0,
-			title: "Number of failed tests",
-			titleAngle: 90
-		},
-		grid: {
-			minorVerticalLines: true
-		},
-		mouse: {
-			track: true
-		}
-	});
-})(document.getElementById("diagramm"));
-</script>
-
 
 {{end}}
