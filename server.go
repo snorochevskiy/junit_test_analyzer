@@ -202,7 +202,10 @@ func serveDiffLaunches(w http.ResponseWriter, r *http.Request) {
 func serveDeleteLaunch(w http.ResponseWriter, r *http.Request) {
 	session := SessionManager.GetSessionForRequest(r)
 	if session == nil || session.User == nil {
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		if renderErr := RenderInCommonTemplate(w, HttpErrDTO{Code: 403, Message: "No permissions"}, "error.html"); renderErr != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
 		return
 	}
 
@@ -222,7 +225,10 @@ func serveDeleteLaunch(w http.ResponseWriter, r *http.Request) {
 
 	err := DAO.DeleteLaunch(int64(launchId))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		if renderErr := RenderInCommonTemplate(w, err.Error(), "error.html"); renderErr != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
 		return
 	}
 

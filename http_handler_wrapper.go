@@ -4,7 +4,17 @@ import (
 	"net/http"
 )
 
+const (
+	HND_SUCCESS = 0
+	HND_FAIL    = 1
+)
+
 type ValidationError struct {
+	Message string
+}
+
+type HndStatus struct {
+	Code    int
 	Message string
 }
 
@@ -31,10 +41,9 @@ type Wrapper struct {
 	SessionProvider ISessionProvider
 	Validators      []IValidator
 
-	HadleFunc func(*Context) interface{}
-}
+	HadleFunc func(*Context) (interface{}, HndStatus)
 
-type Renderer struct {
+	ResultRenderer *GoTemplateRenderer
 }
 
 func (wrapper *Wrapper) Wrap() func(http.ResponseWriter, *http.Request) {
@@ -52,10 +61,36 @@ func (wrapper *Wrapper) Wrap() func(http.ResponseWriter, *http.Request) {
 			}
 		}
 
+		result, status := wrapper.HadleFunc(context)
+		if status.Code != HND_FAIL {
+
+		} else {
+			wrapper.ResultRenderer.Render(w, result)
+		}
+
 	}
+}
+
+type GoTemplateRenderer struct {
+	TemplateName string
+}
+
+func (r *GoTemplateRenderer) Render(w http.ResponseWriter, data interface{}) {
+	RenderInCommonTemplate(w, data, r.TemplateName)
+}
+
+type ErrorsRenderer struct {
+}
+
+func (er *ErrorsRenderer) Render(w http.ResponseWriter, he HndStatus) {
+	http.Error(w, he.Message, http.StatusInternalServerError)
 }
 
 type AuthWrapper struct {
 	SessionProvider     ISessionProvider
 	SessionIdCookieName string
+}
+
+func CreateDeleteHandlerWrapper() {
+
 }

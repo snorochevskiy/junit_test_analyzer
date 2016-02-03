@@ -1,5 +1,10 @@
 package main
 
+type HttpErrDTO struct {
+	Code    int
+	Message string
+}
+
 type ViewLaunchDTO struct {
 	LaunchId int
 	Label    string
