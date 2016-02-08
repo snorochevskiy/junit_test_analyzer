@@ -20,6 +20,7 @@ func StartServer(port string) {
 	http.HandleFunc("/packages", serverLaunchPackages)
 	http.HandleFunc("/package", servePackage)
 	http.HandleFunc("/test", serverTestCase)
+	http.HandleFunc("/dynamics", serverTestDymanics)
 	http.HandleFunc("/diff", serveDiffLaunches)
 	http.HandleFunc("/delete-launch", serveDeleteLaunch)
 	http.HandleFunc("/", serveRoot)
@@ -159,6 +160,23 @@ func serverTestCase(w http.ResponseWriter, r *http.Request) {
 	testCase := DAO.GetTestCaseDetails(int64(testCaseId))
 
 	err := RenderInCommonTemplate(w, testCase, "view_test_case.html")
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
+func serverTestDymanics(w http.ResponseWriter, r *http.Request) {
+	testCaseIdParam := r.URL.Query().Get("test_id")
+	testCaseId, parseErr := strconv.Atoi(testCaseIdParam)
+	if parseErr != nil {
+		log.Println(parseErr)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	tests := DAO.GetTestDynamics(int64(testCaseId))
+
+	err := RenderInCommonTemplate(w, tests, "test_dynamics.html")
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}

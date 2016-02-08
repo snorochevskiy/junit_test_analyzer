@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 )
@@ -33,6 +34,21 @@ type TestCaseEntity struct {
 func (tce *TestCaseEntity) String() string {
 	return fmt.Sprintf("TestCaseEntity[Id=%v, Name=%v, ClassName=%v, Status=%v, TestLaunchId=%v]",
 		tce.Id, tce.Name, tce.ClassName, tce.Status, tce.TestLaunchId)
+}
+
+type TestFullInfoEntity struct {
+	Id           int64  `column:"test_case_id"`
+	Name         string `column:"name"`
+	Package      string `column:"package"`
+	ClassName    string `column:"class_name"`
+	Status       string `column:"status"`
+	TestLaunchId int64  `column:"parent_launch_id"`
+	//Md5Hash      string `column:"md5_hash"`
+
+	Branch     string    `column:"branch"`
+	CreateDate time.Time `column:"creation_date"`
+
+	FailureId sql.NullInt64 `column:"test_case_failure_id"`
 }
 
 type FailureEntity struct {

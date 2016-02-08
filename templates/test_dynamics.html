@@ -1,0 +1,12 @@
+{{define "title"}}Test Dynamics{{end}}
+
+{{define "body"}}
+<h1>Test Dynamics</h1>
+
+<ul>
+{{range $index, $val := .}}
+	<li>{{$val.Branch}} : {{$val.Id}} - {{$val.Name}} - {{$val.Status}}</li>
+{{end}}
+</ul>
+
+{{end}}

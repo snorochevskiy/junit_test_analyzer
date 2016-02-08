@@ -270,6 +270,28 @@ func (*DaoService) GetNumberOfFailedTestInLaunch(launchId int64) int {
 	return *num
 }
 
+func (*DaoService) GetTestDynamics(testId int64) []*TestFullInfoEntity {
+	rows, err := ExecuteSelect(
+		"SELECT test_case_id, branch, name, package, class_name, status, parent_launch_id, creation_date, test_case_failure_id "+
+			"FROM test_cases LEFT JOIN test_case_failures ON test_case_id = parent_test_case_id JOIN test_launches ON parent_launch_id = launch_id "+
+			"WHERE md5_hash IN ( SELECT md5_hash FROM test_cases WHERE test_case_id=? ) "+
+			"ORDER BY branch, creation_date",
+		testId)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	results := make([]*TestFullInfoEntity, 0, 10)
+	for rows.Next() {
+		testInfo := new(TestFullInfoEntity)
+		ScanStruct(rows, testInfo)
+		results = append(results, testInfo)
+	}
+
+	return results
+}
+
 func (*DaoService) GetAddedTestsInDiff(launchId1 int64, launchId2 int64) []*TestCaseEntity {
 	newTestsRows, newTestRowsErr := ExecuteSelect(
 		"SELECT test_case_id, name, package, class_name, status, parent_launch_id FROM test_cases WHERE parent_launch_id = ? AND md5_hash IN ( "+
