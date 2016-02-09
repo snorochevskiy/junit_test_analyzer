@@ -3,10 +3,20 @@
 {{define "body"}}
 <h1>Test Dynamics</h1>
 
-<ul>
+<table border="1" class="pure-table">
+	<tr>
+		<th>Branch</th>
+		<th>Launch</th>
+		<th>Status</th>
+	</tr>
+
 {{range $index, $val := .}}
-	<li>{{$val.Branch}} : {{$val.Id}} - {{$val.Name}} - {{$val.Status}}</li>
+	<tr {{if eq $val.Status "FAILED"}}class="failed"{{end}} {{if eq $val.Status "PASSED"}}class="passed"{{end}} {{if eq $val.Status "SKIPPED"}}class="skipped"{{end}} >
+		<td>{{$val.Branch}}</td>
+		<td>{{$val.CreateDate.Format "2006-01-02 15:04:05"}}</td>
+		<td>{{$val.Status}}</td>
+	</tr>
 {{end}}
-</ul>
+</table>
 
 {{end}}

@@ -67,12 +67,14 @@ function DrawChart(canv, data) {
 	var coords = [];
 	for (i=0; i < dots.length; i++) {
 		coords.push({
-				x:plotX0 + (dots[i].x - minX) * xMult,
-				y:plotY0 + plotHeight - (dots[i].y - minY) * yMult
+				x: Math.ceil(plotX0 + (dots[i].x - minX) * xMult),
+				y: Math.ceil(plotY0 + plotHeight - (dots[i].y - minY) * yMult)
 			});
 	}
 
+	// Draw horizontal lines
 	ctx.strokeStyle = "#FFA54F";
+	ctx.lineWidth=1;
 	for (i=1; i < coords.length; i++) {
 		if (coords[i].y == plotY0 + plotHeight) {
 			continue;
