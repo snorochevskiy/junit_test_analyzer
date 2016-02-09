@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 )
 
 const (
@@ -9,13 +10,26 @@ const (
 	HND_FAIL    = 1
 )
 
+type ParamType int
+type ParamSource int
+
+const (
+	PARAM_TYPE_STRING ParamType = iota
+	PARAM_TYPE_INT
+)
+
 type ValidationError struct {
 	Message string
 }
 
-type HndStatus struct {
+type HndError struct {
 	Code    int
 	Message string
+	Type    string
+}
+
+func (he *HndError) Error() string {
+	return he.Message
 }
 
 type IValidator interface {
@@ -34,16 +48,27 @@ type User struct {
 }
 
 type Context struct {
-	User *UserEntity
+	Req    *http.Request
+	Resp   http.ResponseWriter
+	User   *UserEntity
+	Params map[string]interface{}
+}
+
+type Param struct {
+	Name      string
+	Mandatory bool
+	Type      ParamType
 }
 
 type Wrapper struct {
 	SessionProvider ISessionProvider
+	ExpectedParams  []Param
 	Validators      []IValidator
 
-	HadleFunc func(*Context) (interface{}, HndStatus)
+	HadleFunc func(*Context) (interface{}, error)
 
-	ResultRenderer *GoTemplateRenderer
+	SuccessRenderer IRenderer
+	ErrorRenderer   IRenderer
 }
 
 func (wrapper *Wrapper) Wrap() func(http.ResponseWriter, *http.Request) {
@@ -55,6 +80,28 @@ func (wrapper *Wrapper) Wrap() func(http.ResponseWriter, *http.Request) {
 			context.User = session.User
 		}
 
+		for _, expPar := range wrapper.ExpectedParams {
+			p := r.URL.Query().Get(expPar.Name)
+			if p == "" {
+				if expPar.Mandatory {
+					http.Error(w, expPar.Name+" parameter not found", http.StatusBadRequest)
+					return
+				} else {
+					continue
+				}
+			}
+			if expPar.Type == PARAM_TYPE_STRING {
+				context.Params[expPar.Name] = p
+			} else if expPar.Type == PARAM_TYPE_INT {
+				num, err := strconv.Atoi(p)
+				if err != nil {
+					http.Error(w, expPar.Name+" is not a number", http.StatusBadRequest)
+					return
+				}
+				context.Params[expPar.Name] = num
+			}
+		}
+
 		for _, validator := range wrapper.Validators {
 			if validErr := validator.Validate(context); validErr != nil {
 				http.Error(w, validErr.Message, http.StatusBadRequest)
@@ -62,27 +109,33 @@ func (wrapper *Wrapper) Wrap() func(http.ResponseWriter, *http.Request) {
 		}
 
 		result, status := wrapper.HadleFunc(context)
-		if status.Code != HND_FAIL {
-
+		if status != nil {
+			wrapper.ErrorRenderer.Render(context, result)
 		} else {
-			wrapper.ResultRenderer.Render(w, result)
+			wrapper.SuccessRenderer.Render(context, result)
 		}
-
 	}
+}
+
+type IRenderer interface {
+	Render(c *Context, data interface{})
 }
 
 type GoTemplateRenderer struct {
 	TemplateName string
 }
 
-func (r *GoTemplateRenderer) Render(w http.ResponseWriter, data interface{}) {
-	RenderInCommonTemplate(w, data, r.TemplateName)
+func (r *GoTemplateRenderer) Render(c *Context, data interface{}) {
+	if renderErr := RenderInCommonTemplate(c.Resp, data, r.TemplateName); renderErr != nil {
+		http.Error(c.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
 }
 
 type ErrorsRenderer struct {
 }
 
-func (er *ErrorsRenderer) Render(w http.ResponseWriter, he HndStatus) {
+func (er *ErrorsRenderer) Render(w http.ResponseWriter, he HndError) {
 	http.Error(w, he.Message, http.StatusInternalServerError)
 }
 
