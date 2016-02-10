@@ -74,10 +74,15 @@ type Wrapper struct {
 func (wrapper *Wrapper) Wrap() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		context := new(Context)
+		context.Req = r
+		context.Resp = w
+		context.Params = make(map[string]interface{})
 
-		session := wrapper.SessionProvider.GetSessionForRequest(r)
-		if session != nil {
-			context.User = session.User
+		if wrapper.SessionProvider != nil {
+			session := wrapper.SessionProvider.GetSessionForRequest(r)
+			if session != nil {
+				context.User = session.User
+			}
 		}
 
 		for _, expPar := range wrapper.ExpectedParams {
@@ -108,8 +113,8 @@ func (wrapper *Wrapper) Wrap() func(http.ResponseWriter, *http.Request) {
 			}
 		}
 
-		result, status := wrapper.HadleFunc(context)
-		if status != nil {
+		result, err := wrapper.HadleFunc(context)
+		if err != nil {
 			wrapper.ErrorRenderer.Render(context, result)
 		} else {
 			wrapper.SuccessRenderer.Render(context, result)
