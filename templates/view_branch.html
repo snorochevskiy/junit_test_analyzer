@@ -28,18 +28,24 @@
 			<th colspan="2">Launches diff</th>
 		</tr>
 	</thead>
+{{$allLaunches := .}}
+	
+{{$launchesNum := len .}}
+{{$launchesNum := minus $launchesNum 1}}
 {{range $index, $val := .}}
+{{$actualIndex := minus $launchesNum $index}}
+{{$lanch := index $allLaunches $actualIndex}}
 	<tr>
-		<td>{{$index}}</td>
-		<td>{{$val.Id}}</td>
-		<td><a href="launch?launch_id={{$val.Id}}">{{$val.CreateDate.Format "2006-01-02 15:04:05"}}</a></td>
-		<td>{{$val.Label}}</td>
-		<td>{{$val.FailedTestsNum}}</td>
+		<td>{{$actualIndex}}</td>
+		<td>{{$lanch.Id}}</td>
+		<td><a href="launch?launch_id={{$lanch.Id}}">{{$lanch.CreateDate.Format "2006-01-02 15:04:05"}}</a></td>
+		<td>{{$lanch.Label}}</td>
+		<td>{{$lanch.FailedTestsNum}}</td>
 		<td>
-			<a href="/delete-launch?launch_id={{$val.Id}}"><i class="fi-x red"></i></a>
+			<a href="/delete-launch?launch_id={{$lanch.Id}}"><i class="fi-x red"></i></a>
 		</td>
-		<td><button onclick="leftInDiff({{$val.Id}})" >from</button></td>
-		<td><button onclick="rightInDiff({{$val.Id}})" >&nbsp;&nbsp;to&nbsp;&nbsp;</button></td>
+		<td><button onclick="leftInDiff({{$lanch.Id}})" >from</button></td>
+		<td><button onclick="rightInDiff({{$lanch.Id}})" >&nbsp;&nbsp;to&nbsp;&nbsp;</button></td>
 	</tr>
 {{end}}
 </table>

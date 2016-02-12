@@ -36,7 +36,9 @@ func createTemplateForFiles(filenames ...string) (*template.Template, error) {
 		fullFileNames = append(fullFileNames, fullFileName)
 	}
 
-	temp, tempErr := template.ParseFiles(fullFileNames...)
+	funcMap := template.FuncMap{"minus": minus}
+
+	temp, tempErr := template.New("layout").Funcs(funcMap).ParseFiles(fullFileNames...)
 	if tempErr != nil {
 		fmt.Println(tempErr)
 	}
@@ -44,15 +46,19 @@ func createTemplateForFiles(filenames ...string) (*template.Template, error) {
 }
 
 func RenderInCommonTemplate(w http.ResponseWriter, dto interface{}, templateName string) error {
-	template, err := createCommonTemplate(templateName)
+	tmplt, err := createCommonTemplate(templateName)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	if err := template.ExecuteTemplate(w, "layout", dto); err != nil {
+	if err := tmplt.ExecuteTemplate(w, "layout", dto); err != nil {
 		log.Println(err)
 		return err
 	}
 	return nil
+}
+
+func minus(a int, b int) int {
+	return a - b
 }
