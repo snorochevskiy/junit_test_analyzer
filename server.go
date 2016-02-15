@@ -23,6 +23,9 @@ func StartServer(port string) {
 	http.HandleFunc("/dynamics", serverTestDymanics)
 	http.HandleFunc("/diff", serveDiffLaunches)
 	http.HandleFunc("/delete-launch", serveDeleteLaunch)
+
+	http.HandleFunc("/admin/list-users", serveListUsers)
+
 	http.HandleFunc("/", serveRoot)
 
 	log.Println("Listening...")

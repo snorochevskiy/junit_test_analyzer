@@ -360,3 +360,21 @@ func (*DaoService) FindUser(login string, password string) *UserEntity {
 
 	return userEntity
 }
+
+func (*DaoService) GetAllUsers() []*UserEntity {
+	rows, err := ExecuteSelect(
+		"SELECT user_id, login, password, is_active, first_name, last_name FROM users")
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	defer rows.Close()
+
+	users := make([]*UserEntity, 0, 10)
+	for rows.Next() {
+		user := new(UserEntity)
+		ScanStruct(rows, user)
+		users = append(users, user)
+	}
+	return users
+}

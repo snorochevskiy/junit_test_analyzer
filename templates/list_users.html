@@ -1,0 +1,12 @@
+{{define "title"}}Users{{end}}
+
+{{define "body"}}
+<h1>Users</h1>
+
+<ul>
+{{range $index, $val := .}}
+	<li>{{$val.Login}}</li>
+{{end}}
+</ul>
+
+{{end}}
