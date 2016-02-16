@@ -16,14 +16,21 @@
 		<a href="/" class="pure-menu-heading pure-menu-link">JUTRA</a>
 		
 		<ul class="pure-menu-list right" >
+			{{with .User}}
+			{{if .LoggedIn}}
+			<li class="pure-menu-item"><a href="/logout" class="pure-menu-link">Logout</a></li>
+			{{else}}
 			<li class="pure-menu-item"><a href="/login" class="pure-menu-link">Login</a></li>
+			{{end}}
+			{{end}}
+			
 		</ul>
 		
 	</div>
 </div>
 
 	<div id="pageContainer">
-	{{template "body" .}}
+	{{template "body" .Data}}
 	<div>
 
 </body>

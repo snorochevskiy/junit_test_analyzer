@@ -52,3 +52,11 @@ func isValueInList(value string, list []string) bool {
 	}
 	return false
 }
+
+func ConvertBool(val bool) int {
+	if val {
+		return 1
+	} else {
+		return 0
+	}
+}

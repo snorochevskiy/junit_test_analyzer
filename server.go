@@ -9,25 +9,42 @@ import (
 
 func StartServer(port string) {
 
+	rh := RoutedHandler{}
+	rh.AddRoute("/", serveRootEx)
+	rh.AddRoute("/branch", serveLaunchesInBranchEx)
+	rh.AddRoute("/launch", serverLaunchEx)
+	rh.AddRoute("/packages", serverLaunchPackagesEx)
+	rh.AddRoute("/package", servePackageEx)
+	rh.AddRoute("/test", serverTestCaseEx)
+	rh.AddRoute("/dynamics", serverTestDymanicsEx)
+	rh.AddRoute("/diff", serveDiffLaunchesEx)
+	rh.AddRoute("/delete-launch", serveDeleteLaunchEx)
+
+	rh.AddRoute("/admin/list-users", serveListUsersEx)
+	rh.AddRoute("/admin/edit-user", serveEditUserEx)
+
+	rh.AddRoute("/login", handleLoginEx)
+	rh.AddRoute("/logout", handleLogoutEx)
+
 	fs := http.FileServer(http.Dir("static"))
 	http.Handle("/static/", maxAgeHandler(3600, http.StripPrefix("/static/", fs)))
 
-	http.HandleFunc("/login", handleLogin)
-	http.HandleFunc("/logout", handleLogout)
+	//	http.HandleFunc("/login", handleLogin)
+	//	http.HandleFunc("/logout", handleLogout)
 
-	http.HandleFunc("/branch", serveLaunchesInBranch)
-	http.HandleFunc("/launch", serverLaunch)
-	http.HandleFunc("/packages", serverLaunchPackages)
-	http.HandleFunc("/package", servePackage)
-	http.HandleFunc("/test", serverTestCase)
-	http.HandleFunc("/dynamics", serverTestDymanics)
-	http.HandleFunc("/diff", serveDiffLaunches)
-	http.HandleFunc("/delete-launch", serveDeleteLaunch)
+	//	http.HandleFunc("/branch", serveLaunchesInBranch)
+	//	http.HandleFunc("/launch", serverLaunch)
+	//	http.HandleFunc("/packages", serverLaunchPackages)
+	//	http.HandleFunc("/package", servePackage)
+	//	http.HandleFunc("/test", serverTestCase)
+	//	http.HandleFunc("/dynamics", serverTestDymanics)
+	//	http.HandleFunc("/diff", serveDiffLaunches)
+	//	http.HandleFunc("/delete-launch", serveDeleteLaunch)
 
-	http.HandleFunc("/admin/list-users", serveListUsers)
-	http.HandleFunc("/admin/edit-user", serveEditUser)
+	//	http.HandleFunc("/admin/list-users", serveListUsers)
+	//	http.HandleFunc("/admin/edit-user", serveEditUser)
 
-	http.HandleFunc("/", serveRoot)
+	http.HandleFunc("/", rh.ServeHTTP)
 
 	log.Println("Listening...")
 	http.ListenAndServe(":"+port, nil)
@@ -42,9 +59,16 @@ func maxAgeHandler(seconds int, h http.Handler) http.Handler {
 
 func serveRoot(w http.ResponseWriter, r *http.Request) {
 
+	session := SESSION_MANAGER.GetSessionForRequest(r)
+	user := session.GetUserRenderInfo()
+
 	branches := DAO.GetAllBranches()
 
-	err := RenderInCommonTemplate(w, branches, "list_branches.html")
+	ro := RenderObject{
+		User: user,
+		Data: branches,
+	}
+	err := RenderInCommonTemplate(w, ro, "list_branches.html")
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -222,7 +246,7 @@ func serveDiffLaunches(w http.ResponseWriter, r *http.Request) {
 }
 
 func serveDeleteLaunch(w http.ResponseWriter, r *http.Request) {
-	session := SessionManager.GetSessionForRequest(r)
+	session := SESSION_MANAGER.GetSessionForRequest(r)
 	if session == nil || session.User == nil {
 		if renderErr := RenderInCommonTemplate(w, HttpErrDTO{Code: 403, Message: "No permissions"}, "error.html"); renderErr != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -259,8 +283,8 @@ func serveDeleteLaunch(w http.ResponseWriter, r *http.Request) {
 
 func handleLogin(w http.ResponseWriter, r *http.Request) {
 
-	session := SessionManager.GetSessionForRequest(r)
-	if session != nil {
+	session := SESSION_MANAGER.GetSessionForRequest(r)
+	if session.IsLoggedIn() {
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
@@ -292,7 +316,7 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else {
-		SessionManager.InitSession(w, userInfo)
+		SESSION_MANAGER.InitSession(w, userInfo)
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Header().Set("Pragma", "no-cache")
 		http.Redirect(w, r, "/", http.StatusFound)
@@ -300,6 +324,6 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleLogout(w http.ResponseWriter, r *http.Request) {
-	SessionManager.ClearSession(r, w)
+	SESSION_MANAGER.ClearSession(r, w)
 	http.Redirect(w, r, "/login", http.StatusFound)
 }

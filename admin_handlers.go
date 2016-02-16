@@ -6,38 +6,65 @@ import (
 	"strconv"
 )
 
-func serveListUsers(w http.ResponseWriter, r *http.Request) {
+func serveListUsersEx(context *HttpContext) {
 
 	users := DAO.GetAllUsers()
 
-	err := RenderInCommonTemplate(w, users, "list_users.html")
+	ro := RenderObject{
+		User: context.Session.GetUserRenderInfo(),
+		Data: users,
+	}
+	err := RenderInCommonTemplate(context.Resp, ro, "list_users.html")
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }
 
-func serveEditUser(w http.ResponseWriter, r *http.Request) {
+func serveEditUserEx(context *HttpContext) {
 
-	log.Println(r.Method)
-	log.Println(r.FormValue("userId"))
-	log.Println(r.FormValue("password"))
-	log.Println(r.FormValue("isActive"))
-	if r.Method == "POST" && r.FormValue("userId") != "" {
-		log.Println(r.FormValue("login"))
+	if context.Req.Method == "POST" && context.Req.FormValue("userId") != "" && context.Req.FormValue("login") != "" {
+
+		if context.Req.FormValue("password") != "" && context.Req.FormValue("password") != context.Req.FormValue("confirmPassword") {
+			http.Error(context.Resp, "password mistmatch", http.StatusBadRequest)
+			return
+		}
+		userId, err := strconv.Atoi(context.Req.FormValue("userId"))
+		if err != nil {
+			http.Error(context.Resp, "User error", http.StatusBadRequest)
+			return
+		}
+
+		user := UserEntity{
+			UserId:    int64(userId),
+			Login:     context.Req.FormValue("login"),
+			Password:  context.Req.FormValue("password"),
+			IsActive:  context.Req.FormValue("isActive") == "on",
+			FirstName: context.Req.FormValue("firstName"),
+			LastName:  context.Req.FormValue("lastName"),
+		}
+		updateErr := DAO.UpdateUser(&user)
+		if updateErr != nil {
+			http.Error(context.Resp, "Unable to update user", http.StatusInternalServerError)
+			return
+		}
 	}
 
-	userIdParam := r.URL.Query().Get("user_id")
+	userIdParam := context.Req.URL.Query().Get("user_id")
 	userId, parseErr := strconv.Atoi(userIdParam)
 	if parseErr != nil {
 		log.Println(parseErr)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	user := DAO.GetUserById(int64(userId))
 
-	err := RenderInCommonTemplate(w, user, "edit_user.html")
+	ro := RenderObject{
+		User: context.Session.GetUserRenderInfo(),
+		Data: user,
+	}
+	err := RenderInCommonTemplate(context.Resp, ro, "edit_user.html")
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
 }

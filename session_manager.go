@@ -4,14 +4,13 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"io"
-	"log"
 	"net/http"
 	"time"
 )
 
 const SID_COOKIE_NAME = "SID"
 
-var SessionManager SessionManagerService = SessionManagerService{sessionMap: make(map[string]*Session)}
+var SESSION_MANAGER SessionManagerService = SessionManagerService{sessionMap: make(map[string]*Session)}
 
 func init() {
 
@@ -21,6 +20,21 @@ type Session struct {
 	Sid     string
 	User    *UserEntity
 	Created time.Time
+}
+
+func (session *Session) IsLoggedIn() bool {
+	return session.User != nil
+}
+
+func (session *Session) GetUserRenderInfo() *UserRenderInfo {
+	u := new(UserRenderInfo)
+	if session.User == nil {
+		u.LoggedIn = false
+	} else {
+		u.LoggedIn = true
+		u.Details = session.User
+	}
+	return u
 }
 
 type SessionManagerService struct {
@@ -60,8 +74,7 @@ func (manager *SessionManagerService) GetSessionForRequest(r *http.Request) *Ses
 
 	cookie, err := r.Cookie(SID_COOKIE_NAME)
 	if err != nil {
-		log.Println(err)
-		return nil
+		return new(Session)
 	}
 	sid := cookie.Value
 

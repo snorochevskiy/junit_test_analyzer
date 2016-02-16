@@ -1,5 +1,15 @@
 package main
 
+type RenderObject struct {
+	User *UserRenderInfo
+	Data interface{}
+}
+
+type UserRenderInfo struct {
+	LoggedIn bool
+	Details  *UserEntity
+}
+
 type HttpErrDTO struct {
 	Code    int
 	Message string
