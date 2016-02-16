@@ -1,0 +1,47 @@
+{{define "title"}}Edit User{{end}}
+
+{{define "body"}}
+<h1>Edit User</h1>
+
+<form class="pure-form pure-form-aligned" method="POST" action="/admin/edit-user?user_id={{.UserId}}" >
+	
+    <fieldset>
+		<input id="userId" type="hidden" value="{{.UserId}}" >
+        <div class="pure-control-group">
+            <label for="login">Login</label>
+            <input id="login" type="text" placeholder="login" value="{{.Login}}" readonly="readonly" />
+        </div>
+
+        <div class="pure-control-group">
+            <label for="password">Password</label>
+            <input id="password" type="password" placeholder="password" value="{{.Password}}" />
+        </div>
+		
+		<div class="pure-control-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <input id="confirmPassword" type="password" placeholder="confirm password" value="{{.Password}}" />
+        </div>
+
+		<div class="pure-control-group">
+            <label for="firstName">First Name</label>
+            <input id="firstName" type="text" placeholder="first name" value="{{.FirstName}}" />
+        </div>
+
+		<div class="pure-control-group">
+            <label for="lastName">First Name</label>
+            <input id="lastName" type="text" placeholder="last name" value="{{.LastName}}" />
+        </div>
+
+        <div class="pure-controls">
+            <label for="isActive" class="pure-checkbox">
+                <input id="isActive" type="checkbox" {{if .IsActive}}checked="checked"{{end}} /> Is Active
+            </label>
+		</div>
+
+		<div class="pure-controls">
+			<input type="submit" />
+		</div>
+    </fieldset>
+</form>
+
+{{end}}

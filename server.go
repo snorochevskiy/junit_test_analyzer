@@ -25,6 +25,7 @@ func StartServer(port string) {
 	http.HandleFunc("/delete-launch", serveDeleteLaunch)
 
 	http.HandleFunc("/admin/list-users", serveListUsers)
+	http.HandleFunc("/admin/edit-user", serveEditUser)
 
 	http.HandleFunc("/", serveRoot)
 

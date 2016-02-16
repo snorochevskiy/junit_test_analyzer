@@ -3,10 +3,23 @@
 {{define "body"}}
 <h1>Users</h1>
 
-<ul>
+<table class="pure-table" >
+<tr>
+	<th>Login</th>
+	<th>Is active</th>
+	<th>First name</th>
+	<th>Last name</th>
+	<th>Action</th>
+</tr>
 {{range $index, $val := .}}
-	<li>{{$val.Login}}</li>
+	<tr>
+		<td>{{$val.Login}}</td>
+		<td>{{$val.IsActive}}</td>
+		<td>{{$val.FirstName}}</td>
+		<td>{{$val.LastName}}</td>
+		<td><a href="/admin/edit-user?user_id={{$val.UserId}}"><i class="fi-page-edit"></i></a></td>
+	</tr>
 {{end}}
-</ul>
+</table>
 
 {{end}}
