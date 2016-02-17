@@ -2,6 +2,10 @@
 
 {{define "body"}}
 
+{{with .}}
+<p>{{.}}</p>
+{{end}}
+
 <form action="/login" method="POST" class="pure-form pure-form-aligned" >
 	<fieldset>
 		<div class="pure-control-group">

@@ -289,7 +289,7 @@ func handleLoginEx(context *HttpContext) {
 
 		ro := RenderObject{
 			User: context.Session.GetUserRenderInfo(),
-			Data: userInfo,
+			Data: errMsg,
 		}
 		if err := RenderInCommonTemplate(context.Resp, ro, "login.html"); err != nil {
 			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
