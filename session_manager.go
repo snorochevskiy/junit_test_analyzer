@@ -78,7 +78,13 @@ func (manager *SessionManagerService) GetSessionForRequest(r *http.Request) *Ses
 	}
 	sid := cookie.Value
 
-	return manager.sessionMap[sid]
+	session, contains := manager.sessionMap[sid]
+	if contains {
+		return session
+	} else {
+		// Outdated cookie
+		return new(Session)
+	}
 }
 
 func (session *Session) SetCookie(w http.ResponseWriter) {
