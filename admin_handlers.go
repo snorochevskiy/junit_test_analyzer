@@ -10,11 +10,7 @@ func serveListUsersEx(context *HttpContext) {
 
 	users := DAO.GetAllUsers()
 
-	ro := RenderObject{
-		User: context.Session.GetUserRenderInfo(),
-		Data: users,
-	}
-	err := RenderInCommonTemplate(context.Resp, ro, "list_users.html")
+	err := RenderInCommonTemplateEx(context, users, "list_users.html")
 	if err != nil {
 		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -59,11 +55,7 @@ func serveEditUserEx(context *HttpContext) {
 
 	user := DAO.GetUserById(int64(userId))
 
-	ro := RenderObject{
-		User: context.Session.GetUserRenderInfo(),
-		Data: user,
-	}
-	err := RenderInCommonTemplate(context.Resp, ro, "edit_user.html")
+	err := RenderInCommonTemplateEx(context, user, "edit_user.html")
 	if err != nil {
 		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}

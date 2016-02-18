@@ -10,11 +10,7 @@ func serveRootEx(context *HttpContext) {
 
 	branches := DAO.GetAllBranches()
 
-	ro := RenderObject{
-		User: context.Session.GetUserRenderInfo(),
-		Data: branches,
-	}
-	err := RenderInCommonTemplate(context.Resp, ro, "list_branches.html")
+	err := RenderInCommonTemplateEx(context, branches, "list_branches.html")
 	if err != nil {
 		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -26,11 +22,7 @@ func serveLaunchesInBranchEx(context *HttpContext) {
 
 	launches := DAO.GetAllLaunchesInBranch(branchName)
 
-	ro := RenderObject{
-		User: context.Session.GetUserRenderInfo(),
-		Data: launches,
-	}
-	err := RenderInCommonTemplate(context.Resp, ro, "view_branch.html")
+	err := RenderInCommonTemplateEx(context, launches, "view_branch.html")
 	if err != nil {
 		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -58,11 +50,7 @@ func serverLaunchEx(context *HttpContext) {
 	dto.PassedTestsNum = TestsWithStatusNum(dto.Tests, TEST_CASE_STATUS_PASSED)
 	dto.SkippedTestsNum = TestsWithStatusNum(dto.Tests, TEST_CASE_STATUS_SKIPPED)
 
-	ro := RenderObject{
-		User: context.Session.GetUserRenderInfo(),
-		Data: dto,
-	}
-	err := RenderInCommonTemplate(context.Resp, ro, "view_launch.html")
+	err := RenderInCommonTemplateEx(context, dto, "view_launch.html")
 	if err != nil {
 		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -90,11 +78,7 @@ func servePackageEx(context *HttpContext) {
 	dto.Package = packageParam
 	dto.Tests = testCases
 
-	ro := RenderObject{
-		User: context.Session.GetUserRenderInfo(),
-		Data: dto,
-	}
-	err := RenderInCommonTemplate(context.Resp, ro, "view_package.html")
+	err := RenderInCommonTemplateEx(context, dto, "view_package.html")
 	if err != nil {
 		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -118,11 +102,7 @@ func serverLaunchPackagesEx(context *HttpContext) {
 	dto.LaunchId = launchId
 	dto.Packages = packages
 
-	ro := RenderObject{
-		User: context.Session.GetUserRenderInfo(),
-		Data: dto,
-	}
-	err = RenderInCommonTemplate(context.Resp, ro, "view_packages.html")
+	err = RenderInCommonTemplateEx(context, dto, "view_packages.html")
 	if err != nil {
 		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -139,11 +119,7 @@ func serverTestCaseEx(context *HttpContext) {
 
 	testCase := DAO.GetTestCaseDetails(int64(testCaseId))
 
-	ro := RenderObject{
-		User: context.Session.GetUserRenderInfo(),
-		Data: testCase,
-	}
-	err := RenderInCommonTemplate(context.Resp, ro, "view_test_case.html")
+	err := RenderInCommonTemplateEx(context, testCase, "view_test_case.html")
 	if err != nil {
 		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -160,11 +136,7 @@ func serverTestDymanicsEx(context *HttpContext) {
 
 	tests := DAO.GetTestDynamics(int64(testCaseId))
 
-	ro := RenderObject{
-		User: context.Session.GetUserRenderInfo(),
-		Data: tests,
-	}
-	err := RenderInCommonTemplate(context.Resp, ro, "test_dynamics.html")
+	err := RenderInCommonTemplateEx(context, tests, "test_dynamics.html")
 	if err != nil {
 		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -199,11 +171,7 @@ func serveDiffLaunchesEx(context *HttpContext) {
 	dto.SkippedToFailedTests = DAO.GetTestsFromStatus1ToStatus2(int64(launchId1), int64(launchId2), TEST_CASE_STATUS_SKIPPED, TEST_CASE_STATUS_FAILED)
 	dto.SkippedToPassedTests = DAO.GetTestsFromStatus1ToStatus2(int64(launchId1), int64(launchId2), TEST_CASE_STATUS_SKIPPED, TEST_CASE_STATUS_PASSED)
 
-	ro := RenderObject{
-		User: context.Session.GetUserRenderInfo(),
-		Data: dto,
-	}
-	err := RenderInCommonTemplate(context.Resp, ro, "view_launches_diff.html")
+	err := RenderInCommonTemplateEx(context, dto, "view_launches_diff.html")
 	if err != nil {
 		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
@@ -212,11 +180,10 @@ func serveDiffLaunchesEx(context *HttpContext) {
 func serveDeleteLaunchEx(context *HttpContext) {
 	session := context.Session
 	if !session.IsLoggedIn() {
-		ro := RenderObject{
-			User: context.Session.GetUserRenderInfo(),
-			Data: HttpErrDTO{Code: 403, Message: "No permissions"},
-		}
-		if renderErr := RenderInCommonTemplate(context.Resp, ro, "error.html"); renderErr != nil {
+
+		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
+
+		if renderErr := RenderInCommonTemplateEx(context, errDto, "error.html"); renderErr != nil {
 			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -239,11 +206,7 @@ func serveDeleteLaunchEx(context *HttpContext) {
 
 	err := DAO.DeleteLaunch(int64(launchId))
 	if err != nil {
-		ro := RenderObject{
-			User: context.Session.GetUserRenderInfo(),
-			Data: err.Error(),
-		}
-		if renderErr := RenderInCommonTemplate(context.Resp, ro, "error.html"); renderErr != nil {
+		if renderErr := RenderInCommonTemplateEx(context, err.Error(), "error.html"); renderErr != nil {
 			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
@@ -262,11 +225,7 @@ func handleLoginEx(context *HttpContext) {
 	}
 
 	if context.Req.Method != "POST" {
-		ro := RenderObject{
-			User: context.Session.GetUserRenderInfo(),
-			Data: nil,
-		}
-		if err := RenderInCommonTemplate(context.Resp, ro, "login.html"); err != nil {
+		if err := RenderInCommonTemplateEx(context, nil, "login.html"); err != nil {
 			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 		return
@@ -286,12 +245,7 @@ func handleLoginEx(context *HttpContext) {
 	}
 
 	if login == "" || errMsg != "" {
-
-		ro := RenderObject{
-			User: context.Session.GetUserRenderInfo(),
-			Data: errMsg,
-		}
-		if err := RenderInCommonTemplate(context.Resp, ro, "login.html"); err != nil {
+		if err := RenderInCommonTemplateEx(context, errMsg, "login.html"); err != nil {
 			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		}
 

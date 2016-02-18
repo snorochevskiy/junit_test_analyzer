@@ -15,6 +15,17 @@
 	<div class="pure-menu pure-menu-horizontal" >
 		<a href="/" class="pure-menu-heading pure-menu-link">JUTRA</a>
 		
+		<ul class="pure-menu-list">
+			{{if and .User .User.LoggedIn}}
+	        <li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
+				<a href="#" id="menuLink1" class="pure-menu-link">Admin</a>
+				<ul class="pure-menu-children">
+					<li class="pure-menu-item"><a href="/admin/list-users" class="pure-menu-link">Manage Users</a></li>
+				</ul>
+			</li>
+			{{end}}
+		</ul>
+		
 		<ul class="pure-menu-list right" >
 			{{with .User}}
 			{{if .LoggedIn}}

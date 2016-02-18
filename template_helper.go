@@ -59,6 +59,24 @@ func RenderInCommonTemplate(w http.ResponseWriter, dto interface{}, templateName
 	return nil
 }
 
+func RenderInCommonTemplateEx(context *HttpContext, dto interface{}, templateName string) error {
+	tmplt, err := createCommonTemplate(templateName)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	ro := RenderObject{
+		User: context.Session.GetUserRenderInfo(),
+		Data: dto,
+	}
+	if err := tmplt.ExecuteTemplate(context.Resp, "layout", ro); err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
 func minus(a int, b int) int {
 	return a - b
 }
