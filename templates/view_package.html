@@ -5,10 +5,10 @@
 
 <h3><a href="/launch?launch_id={{.LaunchId}}">Parent tests launch</a></h3>
 
-<table border="1">
+<table border="1" class="jutra-table-big">
 
 {{range $index, $val := .Tests}}
-	<tr>
+	<tr {{if eq $val.Status "FAILED"}}class="failed"{{end}} {{if eq $val.Status "PASSED"}}class="passed"{{end}} {{if eq $val.Status "SKIPPED"}}class="skipped"{{end}}>
 		<td>{{$val.ClassName}}</td>
 		<td><a href="/test?test_id={{$val.Id}}" >{{$val.Name}}</a></td>
 		<td>{{$val.Status}}</td>
