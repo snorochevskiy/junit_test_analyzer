@@ -8,7 +8,7 @@ import (
 
 func serveRootEx(context *HttpContext) {
 
-	branches := DAO.GetAllBranches()
+	branches := DAO.GetAllBranchesInfo()
 
 	err := RenderInCommonTemplateEx(context, branches, "list_branches.html")
 	if err != nil {

@@ -3,11 +3,18 @@
 {{define "body"}}
 <h1>Branches</h1>
 
-<ul>
+<table border="1" class="jutra-table-big">
+	<tr>
+		<th>Branch name</th>
+		<th>Last changes date</th>
+	</tr>
 {{range $index, $val := .}}
-	<li><a href="/branch?branch_name={{$val}}" >{{$val}}</a></li>
+	<tr>
+		<td><a href="/branch?branch_name={{$val.BranchName}}" >{{$val.BranchName}}</a></td>
+		<td>{{$val.CreationDate.Format "2006 Jan 02"}}</td>
+	</tr>
 {{end}}
-</ul>
+</table>
 
 
 {{end}}

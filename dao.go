@@ -72,7 +72,7 @@ func (*DaoService) PersistLaunch(branch string, testCases []*TestCase, launchTim
 	return nil
 }
 
-func (*DaoService) GetAllBranches() []string {
+func (*DaoService) GetAllBranchesNames() []string {
 	rows, err := ExecuteSelect("SELECT DISTINCT branch FROM test_launches ORDER BY branch")
 	if err != nil {
 		log.Println(err)
@@ -90,6 +90,32 @@ func (*DaoService) GetAllBranches() []string {
 		branchNames = append(branchNames, branchName)
 	}
 	return branchNames
+}
+
+func (*DaoService) GetAllBranchesInfo() []*BranchInfoEntity {
+	rows, err := ExecuteSelect("SELECT branch, MAX(creation_date) FROM test_launches GROUP BY branch ORDER BY MAX(creation_date)")
+	if err != nil {
+		log.Println(err)
+	}
+	defer rows.Close()
+
+	branches := make([]*BranchInfoEntity, 0, 10)
+	for rows.Next() {
+		var name string
+		var creationTime string
+		scanErr := rows.Scan(&name, &creationTime)
+		if scanErr != nil {
+			log.Println(scanErr)
+			continue
+		}
+		parsedTime, parseErr := ParseSqlite3Date(creationTime)
+		if parseErr != nil {
+			log.Println(parseErr)
+			continue
+		}
+		branches = append(branches, &BranchInfoEntity{BranchName: name, CreationDate: parsedTime})
+	}
+	return branches
 }
 
 func (dao *DaoService) GetAllLaunchesInBranch(branch string) []*TestLaunchEntity {
@@ -275,7 +301,7 @@ func (*DaoService) GetTestDynamics(testId int64) []*TestFullInfoEntity {
 		"SELECT test_case_id, branch, name, package, class_name, status, parent_launch_id, creation_date, test_case_failure_id "+
 			"FROM test_cases LEFT JOIN test_case_failures ON test_case_id = parent_test_case_id JOIN test_launches ON parent_launch_id = launch_id "+
 			"WHERE md5_hash IN ( SELECT md5_hash FROM test_cases WHERE test_case_id=? ) "+
-			"ORDER BY branch, creation_date",
+			"ORDER BY creation_date DESC",
 		testId)
 	if err != nil {
 		log.Println(err)

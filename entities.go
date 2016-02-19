@@ -6,6 +6,11 @@ import (
 	"time"
 )
 
+type BranchInfoEntity struct {
+	BranchName   string    `column:"branch"`
+	CreationDate time.Time `column:"creation_date"`
+}
+
 type TestLaunchEntity struct {
 	Id             int64     `column:"launch_id"`
 	Branch         string    `column:"branch"`

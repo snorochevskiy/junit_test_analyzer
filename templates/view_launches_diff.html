@@ -7,59 +7,93 @@
 <a href="/launch?launch_id={{.LaunchId2}}">Launch 2</a>
 
 <h2>Added tests</h2>
-<ul>
-{{range $index, $val := .AddedTests}}
-	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
-{{end}}
-</ul>
+
+<table border="1" class="jutra-table" >
+	{{range $index, $val := .AddedTests}}
+	<tr {{if eq $val.Status "FAILED"}}class="failed"{{end}} {{if eq $val.Status "PASSED"}}class="passed"{{end}} {{if eq $val.Status "SKIPPED"}}class="skipped"{{end}}>
+		<td>{{$val.ClassName}}</td>
+		<td><a href="/test?test_id={{$val.Id}}" >{{$val.Name}}</a></td>
+		<td>{{$val.Status}}</td>
+	</tr>
+	{{end}}
+</table>
 
 <h2>Removed tests</h2>
-<ul>
-{{range $index, $val := .RemovedTests}}
-	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
-{{end}}
-</ul>
 
-<h2>PASSED -> FAILED</h2>
-<ul>
-{{range $index, $val := .PassedToFailedTests}}
-	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
-{{end}}
-</ul>
+<table border="1" class="jutra-table" >
+	{{range $index, $val := .RemovedTests}}
+	<tr {{if eq $val.Status "FAILED"}}class="failed"{{end}} {{if eq $val.Status "PASSED"}}class="passed"{{end}} {{if eq $val.Status "SKIPPED"}}class="skipped"{{end}}>
+		<td>{{$val.ClassName}}</td>
+		<td><a href="/test?test_id={{$val.Id}}" >{{$val.Name}}</a></td>
+		<td>{{$val.Status}}</td>
+	</tr>
+	{{end}}
+</table>
 
-<h2>FAILED -> PASSED</h2>
-<ul>
-{{range $index, $val := .FailedToPassedTests}}
-	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
-{{end}}
-</ul>
+<h2>PASSED &#10142; FAILED</h2>
 
-<h2>PASSED -> SKIPPED</h2>
-<ul>
-{{range $index, $val := .PassedToSkippedTests}}
-	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
-{{end}}
-</ul>
+<table border="1" class="jutra-table" >
+	{{range $index, $val := .PassedToFailedTests}}
+	<tr class="failed" >
+		<td>{{$val.ClassName}}</td>
+		<td><a href="/test?test_id={{$val.Id}}" >{{$val.Name}}</a></td>
+	</tr>
+	{{end}}
+</table>
 
-<h2>FAILED -> SKIPPED</h2>
-<ul>
-{{range $index, $val := .FailedToSkippedTests}}
-	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
-{{end}}
-</ul>
+<h2>FAILED &#10142; PASSED</h2>
 
-<h2>SKIPPED -> FAILED</h2>
-<ul>
-{{range $index, $val := .SkippedToFailedTests}}
-	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
-{{end}}
-</ul>
+<table border="1" class="jutra-table" >
+	{{range $index, $val := .FailedToPassedTests}}
+	<tr class="passed" >
+		<td>{{$val.ClassName}}</td>
+		<td><a href="/test?test_id={{$val.Id}}" >{{$val.Name}}</a></td>
+	</tr>
+	{{end}}
+</table>
 
-<h2>SKIPPED -> PASSED</h2>
-<ul>
-{{range $index, $val := .SkippedToPassedTests}}
-	<li><a href="/test?test_id={{$val.Id}}" >{{$val.ClassName}} # {{$val.Name}} - {{$val.Status}}</a></li>
-{{end}}
-</ul>
+<h2>PASSED &#10142; SKIPPED</h2>
+
+<table border="1" class="jutra-table" >
+	{{range $index, $val := .PassedToSkippedTests}}
+	<tr class="skipped" >
+		<td>{{$val.ClassName}}</td>
+		<td><a href="/test?test_id={{$val.Id}}" >{{$val.Name}}</a></td>
+	</tr>
+	{{end}}
+</table>
+
+<h2>FAILED &#10142; SKIPPED</h2>
+
+<table border="1" class="jutra-table" >
+	{{range $index, $val := .FailedToSkippedTests}}
+	<tr class="skipped" >
+		<td>{{$val.ClassName}}</td>
+		<td><a href="/test?test_id={{$val.Id}}" >{{$val.Name}}</a></td>
+	</tr>
+	{{end}}
+</table>
+
+<h2>SKIPPED &#10142; FAILED</h2>
+
+<table border="1" class="jutra-table" >
+	{{range $index, $val := .SkippedToFailedTests}}
+	<tr class="failed" >
+		<td>{{$val.ClassName}}</td>
+		<td><a href="/test?test_id={{$val.Id}}" >{{$val.Name}}</a></td>
+	</tr>
+	{{end}}
+</table>
+
+<h2>SKIPPED &#10142; PASSED</h2>
+
+<table border="1" class="jutra-table" >
+	{{range $index, $val := .SkippedToPassedTests}}
+	<tr class="passed" >
+		<td>{{$val.ClassName}}</td>
+		<td><a href="/test?test_id={{$val.Id}}" >{{$val.Name}}</a></td>
+	</tr>
+	{{end}}
+</table>
 
 {{end}}

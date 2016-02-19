@@ -3,7 +3,7 @@
 {{define "body"}}
 <h1>Test Dynamics</h1>
 
-<table border="1" class="pure-table">
+<table border="1" class="jutra-table-big">
 	<tr>
 		<th>Branch</th>
 		<th>Launch</th>
@@ -12,8 +12,8 @@
 
 {{range $index, $val := .}}
 	<tr {{if eq $val.Status "FAILED"}}class="failed"{{end}} {{if eq $val.Status "PASSED"}}class="passed"{{end}} {{if eq $val.Status "SKIPPED"}}class="skipped"{{end}} >
-		<td>{{$val.Branch}}</td>
-		<td>{{$val.CreateDate.Format "2006-01-02 15:04:05"}}</td>
+		<td><a href="/branch?branch_name={{$val.Branch}}">{{$val.Branch}}</a></td>
+		<td><a href="/test?test_id={{$val.Id}}">{{$val.CreateDate.Format "2006-01-02 15:04:05"}}</a></td>
 		<td>{{$val.Status}}</td>
 	</tr>
 {{end}}

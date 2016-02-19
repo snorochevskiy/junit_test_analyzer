@@ -2,10 +2,12 @@ package main
 
 import (
 	"database/sql"
-	"github.com/mattn/go-sqlite3"
 	"log"
 	"os"
 	"path/filepath"
+	"time"
+
+	"github.com/mattn/go-sqlite3"
 )
 
 var DB_CONNECTION_URL = ConstructDbUrl()
@@ -92,6 +94,10 @@ func ExecuteDelete(query string, args ...interface{}) (sql.Result, error) {
 	}
 
 	return stmt.Exec(args...)
+}
+
+func ParseSqlite3Date(str string) (time.Time, error) {
+	return time.Parse(sqlite3.SQLiteTimestampFormats[0], str)
 }
 
 type DummyResult struct{}

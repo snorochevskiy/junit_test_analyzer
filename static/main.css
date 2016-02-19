@@ -7,12 +7,30 @@ a {
 	text-decoration: none;
 }
 
+a.buttonStyle {
+	background: #A9E2F3;
+	border-style: solid;
+	border-radius: 5px;
+	border-width : 1px 1px 1px 1px;
+	text-decoration : none;
+	padding : 10px;
+	border-color : #000000;
+}
+
 table.jutra-table td {
-	padding: 2px;
+	padding: 3px;
 }
 
 table.jutra-table th {
-	padding: 2px;
+	padding: 3px;
+}
+
+table.jutra-table-big td {
+	padding: 8px;
+}
+
+table.jutra-table-big th {
+	padding: 8px;
 }
 
 table.jutra-info-table td {
