@@ -6,9 +6,31 @@ import (
 	"time"
 )
 
+type Comparable interface {
+	IsLess(Comparable) bool
+}
+
+type SortableSlice []*BranchInfoEntity
+
+func (s SortableSlice) Len() int {
+	return len(s)
+}
+func (s SortableSlice) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+func (s SortableSlice) Less(i, j int) bool {
+	return s[i].IsLess(s[j])
+}
+
 type BranchInfoEntity struct {
-	BranchName   string    `column:"branch"`
-	CreationDate time.Time `column:"creation_date"`
+	BranchName      string    `column:"branch"`
+	CreationDate    time.Time `column:"creation_date"`
+	LastLaunchId    int64     `column:"launch_id"`
+	LastLauchFailed bool
+}
+
+func (this *BranchInfoEntity) IsLess(other *BranchInfoEntity) bool {
+	return this.CreationDate.Before(other.CreationDate)
 }
 
 type TestLaunchEntity struct {

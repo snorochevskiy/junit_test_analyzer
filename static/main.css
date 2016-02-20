@@ -17,6 +17,10 @@ a.buttonStyle {
 	border-color : #000000;
 }
 
+.novisited-links a:visited {
+	color: blue;
+}
+
 table.jutra-table td {
 	padding: 3px;
 }

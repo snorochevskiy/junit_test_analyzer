@@ -3,16 +3,25 @@ package main
 import (
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
 )
 
 func serveRootEx(context *HttpContext) {
 
-	branches := DAO.GetAllBranchesInfo()
+	branches, err := DAO.GetAllBranchesInfo()
 
-	err := RenderInCommonTemplateEx(context, branches, "list_branches.html")
 	if err != nil {
 		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	sort.Sort(sort.Reverse(SortableSlice(branches)))
+	sort.Reverse(SortableSlice(branches))
+
+	rendRrr := RenderInCommonTemplateEx(context, branches, "list_branches.html")
+	if rendRrr != nil {
+		http.Error(context.Resp, rendRrr.Error(), http.StatusInternalServerError)
 	}
 }
 

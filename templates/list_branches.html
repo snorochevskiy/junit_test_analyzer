@@ -3,15 +3,17 @@
 {{define "body"}}
 <h1>Branches</h1>
 
-<table border="1" class="jutra-table-big">
+<table border="1" class="jutra-table-big novisited-links">
 	<tr>
 		<th>Branch name</th>
 		<th>Last changes date</th>
+		<th>Status</th>
 	</tr>
 {{range $index, $val := .}}
-	<tr>
+	<tr {{if $val.LastLauchFailed}}class="failed"{{else}}class="passed"{{end}} >
 		<td><a href="/branch?branch_name={{$val.BranchName}}" >{{$val.BranchName}}</a></td>
 		<td>{{$val.CreationDate.Format "2006 Jan 02"}}</td>
+		<td>{{if $val.LastLauchFailed}}FAILING{{else}}HEALTHY{{end}}</td>
 	</tr>
 {{end}}
 </table>

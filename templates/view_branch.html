@@ -25,7 +25,6 @@
 <table class="pure-table" >
 	<thead>
 		<tr>
-			<th>No</th>
 			<th>Launch No.</th>
 			<th>Tests launch</th>
 			<th>Label</th>
@@ -42,7 +41,6 @@
 {{$actualIndex := minus $launchesNum $index}}
 {{$lanch := index $allLaunches $actualIndex}}
 	<tr>
-		<td>{{$actualIndex}}</td>
 		<td>{{$lanch.Id}}</td>
 		<td><a href="launch?launch_id={{$lanch.Id}}">{{$lanch.CreateDate.Format "2006-01-02 15:04:05"}}</a></td>
 		<td>{{$lanch.Label}}</td>

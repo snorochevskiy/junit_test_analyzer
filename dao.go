@@ -92,30 +92,61 @@ func (*DaoService) GetAllBranchesNames() []string {
 	return branchNames
 }
 
-func (*DaoService) GetAllBranchesInfo() []*BranchInfoEntity {
-	rows, err := ExecuteSelect("SELECT branch, MAX(creation_date) FROM test_launches GROUP BY branch ORDER BY MAX(creation_date)")
+func (*DaoService) GetAllBranchesInfo() ([]*BranchInfoEntity, error) {
+	connection, err := OpenDbConnection()
 	if err != nil {
-		log.Println(err)
+		return nil, err
+	}
+	defer connection.Close()
+
+	transaction, err := connection.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := transaction.Query("SELECT DISTINCT branch FROM test_launches")
+	if err != nil {
+		return nil, err
 	}
 	defer rows.Close()
 
 	branches := make([]*BranchInfoEntity, 0, 10)
 	for rows.Next() {
-		var name string
-		var creationTime string
-		scanErr := rows.Scan(&name, &creationTime)
+		bi := new(BranchInfoEntity)
+		scanErr := rows.Scan(&bi.BranchName)
 		if scanErr != nil {
 			log.Println(scanErr)
 			continue
 		}
-		parsedTime, parseErr := ParseSqlite3Date(creationTime)
-		if parseErr != nil {
-			log.Println(parseErr)
+		branches = append(branches, bi)
+	}
+
+	for i := 0; i < len(branches); i++ {
+		rows, err := transaction.Query("SELECT launch_id, creation_date FROM test_launches WHERE branch = ? ORDER BY creation_date DESC LIMIT 1", branches[i].BranchName)
+		if err != nil {
+			log.Println(err)
 			continue
 		}
-		branches = append(branches, &BranchInfoEntity{BranchName: name, CreationDate: parsedTime})
+		if rows.Next() {
+			scanErr := ScanStruct(rows, branches[i])
+			if scanErr != nil {
+				log.Println(scanErr)
+			}
+		}
+		rows.Close()
+
+		failRows, err := transaction.Query("SELECT test_case_id FROM test_cases JOIN test_case_failures ON test_case_id = parent_test_case_id WHERE parent_launch_id = ?", branches[i].LastLaunchId)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		if failRows.Next() {
+			branches[i].LastLauchFailed = true
+		}
+		failRows.Close()
 	}
-	return branches
+
+	return branches, nil
 }
 
 func (dao *DaoService) GetAllLaunchesInBranch(branch string) []*TestLaunchEntity {

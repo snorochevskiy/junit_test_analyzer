@@ -13,13 +13,14 @@
 <tr><td><b>Status:</b></td>		<td>{{.Status}}</td></tr>
 </table>
 
-{{if .FailureInfo}}
-<h2>Failure info:</h2>
-<b>Type:</b> {{.FailureInfo.Type}}<br /><br />
-
 <p>
 <a href="/dynamics?test_id={{.Id}}">Show dynamics for this test</a>
 </p>
+
+
+{{if .FailureInfo}}
+<h2>Failure info:</h2>
+<b>Type:</b> {{.FailureInfo.Type}}<br /><br />
 
 <!--
 <b>Message:</b>
