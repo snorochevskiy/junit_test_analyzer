@@ -17,7 +17,7 @@
 </thead>
 {{$launchId := .LaunchId}}
 {{range $index, $val := .Packages}}
-	<tr>
+	<tr {{if eq 0 $val.FailedTestsNum}}class="passed"{{else}}class="failed"{{end}}>
 		<td><a href="/package?launch_id={{$launchId}}&package={{$val.Package}}">{{$val.Package}}</a></td>
 		<td><center>{{$val.TestsNum}}</center></td>
 		<td><center>{{$val.FailedTestsNum}}</center></td>
