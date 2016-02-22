@@ -461,6 +461,13 @@ func (*DaoService) UpdateUser(user *UserEntity) error {
 	return err
 }
 
+func (*DaoService) InsertUser(user *UserEntity) error {
+	_, err := ExecuteInsert("INSERT INTO users (login, password, is_active, first_name, last_name) VALUES(?, ?, ?, ?, ?)",
+		user.Login, user.Password, ConvertBool(user.IsActive), user.FirstName, user.LastName)
+
+	return err
+}
+
 func (*DaoService) CreateUser(user *UserEntity) error {
 	_, err := ExecuteInsert("INSERT INTO users(login, password, is_active, first_name, last_name) VALUES(?, ?, ?, ?, ?)",
 		user.Login, user.Password, ConvertBool(user.IsActive), user.FirstName, user.LastName, user.UserId)

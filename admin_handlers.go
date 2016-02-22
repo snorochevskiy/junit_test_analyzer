@@ -20,27 +20,21 @@ func serveEditUserEx(context *HttpContext) {
 
 	if context.Req.Method == "POST" && context.Req.FormValue("userId") != "" && context.Req.FormValue("login") != "" {
 
-		if context.Req.FormValue("password") != "" && context.Req.FormValue("password") != context.Req.FormValue("confirmPassword") {
-			http.Error(context.Resp, "password mistmatch", http.StatusBadRequest)
-			return
-		}
-		userId, err := strconv.Atoi(context.Req.FormValue("userId"))
-		if err != nil {
+		user := extractUserFromFormData(context.Req)
+
+		if user.UserId == 0 {
 			http.Error(context.Resp, "User error", http.StatusBadRequest)
 			return
 		}
 
-		user := UserEntity{
-			UserId:    int64(userId),
-			Login:     context.Req.FormValue("login"),
-			Password:  context.Req.FormValue("password"),
-			IsActive:  context.Req.FormValue("isActive") == "on",
-			FirstName: context.Req.FormValue("firstName"),
-			LastName:  context.Req.FormValue("lastName"),
+		if user.Password != context.Req.FormValue("confirmPassword") {
+			http.Error(context.Resp, "password mistmatch", http.StatusBadRequest)
+			return
 		}
-		updateErr := DAO.UpdateUser(&user)
+
+		updateErr := DAO.UpdateUser(user)
 		if updateErr != nil {
-			http.Error(context.Resp, "Unable to update user", http.StatusInternalServerError)
+			http.Error(context.Resp, "Unable to update user. Reason: "+updateErr.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
@@ -59,4 +53,46 @@ func serveEditUserEx(context *HttpContext) {
 	if err != nil {
 		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}
+}
+
+func serveAddUser(context *HttpContext) {
+	if context.Req.Method == "POST" {
+		user := extractUserFromFormData(context.Req)
+
+		if user.Password != context.Req.FormValue("confirmPassword") {
+			http.Error(context.Resp, "password mistmatch", http.StatusBadRequest)
+			return
+		}
+
+		err := DAO.InsertUser(user)
+		if err != nil {
+			http.Error(context.Resp, "Unable to create user. Reason: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	err := RenderInCommonTemplateEx(context, nil, "add_user.html")
+	if err != nil {
+		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
+func extractUserFromFormData(r *http.Request) *UserEntity {
+	user := UserEntity{
+		Login:     r.FormValue("login"),
+		Password:  r.FormValue("password"),
+		IsActive:  r.FormValue("isActive") == "on",
+		FirstName: r.FormValue("firstName"),
+		LastName:  r.FormValue("lastName"),
+	}
+
+	userIdStr := r.FormValue("userId")
+
+	if userIdStr != "" {
+		if userId, err := strconv.Atoi(userIdStr); err == nil {
+			user.UserId = int64(userId)
+		}
+	}
+
+	return &user
 }

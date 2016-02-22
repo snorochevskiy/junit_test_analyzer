@@ -1,0 +1,46 @@
+{{define "title"}}Add User{{end}}
+
+{{define "body"}}
+<h1>Add User</h1>
+
+<form class="pure-form pure-form-aligned" method="POST" action="/admin/add-user" >
+	
+    <fieldset>
+        <div class="pure-control-group">
+            <label for="login">Login</label>
+            <input id="login" name="login" type="text" placeholder="login" />
+        </div>
+
+        <div class="pure-control-group">
+            <label for="password">Password</label>
+            <input name="password" type="password" placeholder="password" />
+        </div>
+		
+		<div class="pure-control-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <input name="confirmPassword" type="password" placeholder="confirm password" />
+        </div>
+
+		<div class="pure-control-group">
+            <label for="firstName">First Name</label>
+            <input name="firstName" type="text" placeholder="first name" />
+        </div>
+
+		<div class="pure-control-group">
+            <label for="lastName">First Name</label>
+            <input name="lastName" type="text" placeholder="last name" />
+        </div>
+
+        <div class="pure-controls">
+            <label for="isActive" class="pure-checkbox">
+                <input name="isActive" type="checkbox" /> Is Active
+            </label>
+		</div>
+
+		<div class="pure-controls">
+			<input type="submit" />
+		</div>
+    </fieldset>
+</form>
+
+{{end}}

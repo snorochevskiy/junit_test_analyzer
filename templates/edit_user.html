@@ -6,7 +6,7 @@
 <form class="pure-form pure-form-aligned" method="POST" action="/admin/edit-user?user_id={{.UserId}}" >
 	
     <fieldset>
-		<input name="userId" type="hidden" value="{{.UserId}}" >
+		<input name="userId" type="hidden" value="{{.UserId}}" />
         <div class="pure-control-group">
             <label for="login">Login</label>
             <input id="login" name="login" type="text" placeholder="login" value="{{.Login}}" readonly="readonly" />

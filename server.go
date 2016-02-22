@@ -24,6 +24,7 @@ func StartServer(port string) {
 
 	rh.AddRoute("/admin/list-users", serveListUsersEx)
 	rh.AddRoute("/admin/edit-user", serveEditUserEx)
+	rh.AddRoute("/admin/add-user", serveAddUser)
 
 	rh.AddRoute("/login", handleLoginEx)
 	rh.AddRoute("/logout", handleLogoutEx)
