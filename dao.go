@@ -393,7 +393,7 @@ func (*DaoService) GetTestsFromStatus1ToStatus2(launchId1 int64, launchId2 int64
 func (*DaoService) DeleteLaunch(launchId int64) error {
 	_, err := ExecuteDelete("DELETE FROM test_launches WHERE launch_id = ?", launchId)
 	if err != nil {
-		// TODO process an error ?
+		log.Println(err)
 		return err
 	}
 	return nil

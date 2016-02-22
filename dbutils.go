@@ -70,7 +70,10 @@ func ExecuteInsert(query string, args ...interface{}) (sql.Result, error) {
 		log.Println(err)
 	}
 
-	return stmt.Exec(args...)
+	execResult, execErr := stmt.Exec(args...)
+	stmt.Close()
+
+	return execResult, execErr
 }
 
 func ExecuteDelete(query string, args ...interface{}) (sql.Result, error) {
@@ -93,7 +96,10 @@ func ExecuteDelete(query string, args ...interface{}) (sql.Result, error) {
 		return nil, err
 	}
 
-	return stmt.Exec(args...)
+	rows, execErr := stmt.Exec(args...)
+	stmt.Close()
+
+	return rows, execErr
 }
 
 func ParseSqlite3Date(str string) (time.Time, error) {
