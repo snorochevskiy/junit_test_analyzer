@@ -215,7 +215,8 @@ func serveDeleteLaunchEx(context *HttpContext) {
 
 	err := DAO.DeleteLaunch(int64(launchId))
 	if err != nil {
-		if renderErr := RenderInCommonTemplateEx(context, err.Error(), "error.html"); renderErr != nil {
+		daoErr := HttpErrDTO{Code: http.StatusInternalServerError, Message: err.Error()}
+		if renderErr := RenderInCommonTemplateEx(context, daoErr, "error.html"); renderErr != nil {
 			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
