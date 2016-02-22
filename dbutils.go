@@ -20,7 +20,13 @@ func ConstructDbUrl() string {
 		log.Fatalln(err)
 	}
 	fileName := filepath.Join(dir, "persist.db")
-	return "file:" + fileName + "?cache=shared&mode=rwc&_busy_timeout=50000000"
+
+	connectionString := "file:" + fileName
+	connectionString += "?cache=shared"
+	connectionString += "&mode=rwc"
+	//connectionString += "&_busy_timeout=50000000"
+
+	return connectionString
 }
 
 func initializeDriver() {
