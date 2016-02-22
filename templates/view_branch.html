@@ -48,8 +48,8 @@
 		<td>
 			<a href="/delete-launch?launch_id={{$lanch.Id}}"><i class="fi-x red"></i></a>
 		</td>
-		<td><button onclick="leftInDiff({{$lanch.Id}})" >from</button></td>
-		<td><button onclick="rightInDiff({{$lanch.Id}})" >&nbsp;&nbsp;to&nbsp;&nbsp;</button></td>
+		<td><button id="fromBtn{{$lanch.Id}}" onclick="leftInDiff({{$lanch.Id}})" >from</button></td>
+		<td><button id="toBtn{{$lanch.Id}}" onclick="rightInDiff({{$lanch.Id}})" >&nbsp;&nbsp;to&nbsp;&nbsp;</button></td>
 	</tr>
 {{end}}
 </table>
@@ -60,12 +60,20 @@ var launchId2 = null;
 var alreadyScrolled = false;
 
 function leftInDiff(launchId) {
+	if (launchId1 != null) {
+		document.getElementById("fromBtn" + launchId1).className = "";
+	}
 	launchId1 = launchId;
+	document.getElementById("fromBtn" + launchId).className = "selected-button";
 	updateHtml();
 }
 
 function rightInDiff(launchId) {
+	if (launchId2 != null) {
+		document.getElementById("toBtn" + launchId2).className = "";
+	}
 	launchId2 = launchId;
+	document.getElementById("toBtn" + launchId).className = "selected-button";
 	updateHtml();
 }
 

@@ -60,3 +60,7 @@ tr.skipped {
 .right {
 	float: right;
 }
+
+.selected-button {
+	background-color: yellow;
+}
