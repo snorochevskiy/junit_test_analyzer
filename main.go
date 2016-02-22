@@ -1,6 +1,9 @@
 package main
 
-import ()
+import (
+	"log"
+	"os"
+)
 
 func main() {
 	initializeDriver()
@@ -10,6 +13,7 @@ func main() {
 		serverConfig := CLI.ParseServerConfiguration()
 		if serverConfig.DaemonMode {
 			Reborn()
+			SetLogToFile()
 		}
 		StartServer(serverConfig.Port)
 	} else if CLI.IsImporterMode() {
@@ -19,4 +23,13 @@ func main() {
 		CLI.Promt()
 	}
 
+}
+
+func SetLogToFile() {
+	f, err := os.OpenFile("jutra.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+
+	log.SetOutput(f)
 }
