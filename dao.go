@@ -19,7 +19,7 @@ func (*DaoService) PersistLaunch(branch string, testCases []*TestCase, launchTim
 	if err != nil {
 		return nil
 	}
-	defer connection.Close()
+	defer closeDb(connection)
 
 	transaction, err := connection.Begin()
 	if err != nil {
@@ -68,7 +68,11 @@ func (*DaoService) PersistLaunch(branch string, testCases []*TestCase, launchTim
 			}
 		}
 	}
-	transaction.Commit()
+
+	if commitErr := transaction.Commit(); commitErr != nil {
+		log.Printf("Unable to commit new launch INSERT. Reason: %v\n", commitErr)
+	}
+
 	return nil
 }
 
@@ -97,18 +101,13 @@ func (*DaoService) GetAllBranchesInfo() ([]*BranchInfoEntity, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer connection.Close()
+	defer closeDb(connection)
 
-	transaction, err := connection.Begin()
+	rows, err := connection.Query("SELECT DISTINCT branch FROM test_launches")
 	if err != nil {
 		return nil, err
 	}
-
-	rows, err := transaction.Query("SELECT DISTINCT branch FROM test_launches")
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+	defer closeRows(rows)
 
 	branches := make([]*BranchInfoEntity, 0, 10)
 	for rows.Next() {
@@ -122,7 +121,7 @@ func (*DaoService) GetAllBranchesInfo() ([]*BranchInfoEntity, error) {
 	}
 
 	for i := 0; i < len(branches); i++ {
-		rows, err := transaction.Query("SELECT launch_id, creation_date FROM test_launches WHERE branch = ? ORDER BY creation_date DESC LIMIT 1", branches[i].BranchName)
+		rows, err := connection.Query("SELECT launch_id, creation_date FROM test_launches WHERE branch = ? ORDER BY creation_date DESC LIMIT 1", branches[i].BranchName)
 		if err != nil {
 			log.Println(err)
 			continue
@@ -135,7 +134,7 @@ func (*DaoService) GetAllBranchesInfo() ([]*BranchInfoEntity, error) {
 		}
 		rows.Close()
 
-		failRows, err := transaction.Query("SELECT test_case_id FROM test_cases JOIN test_case_failures ON test_case_id = parent_test_case_id WHERE parent_launch_id = ?", branches[i].LastLaunchId)
+		failRows, err := connection.Query("SELECT test_case_id FROM test_cases JOIN test_case_failures ON test_case_id = parent_test_case_id WHERE parent_launch_id = ?", branches[i].LastLaunchId)
 		if err != nil {
 			log.Println(err)
 			continue
@@ -155,7 +154,7 @@ func (dao *DaoService) GetAllLaunchesInBranch(branch string) []*TestLaunchEntity
 		log.Println(err)
 		return nil
 	}
-	defer rows.Close()
+	defer closeRows(rows)
 
 	testLaunches := make([]*TestLaunchEntity, 0, 10)
 	for rows.Next() {
@@ -175,7 +174,7 @@ func (*DaoService) GetLaunchInfo(launchId int64) *TestLaunchEntity {
 		log.Println(err)
 		return nil
 	}
-	defer rows.Close()
+	defer closeRows(rows)
 
 	if !rows.Next() {
 		return nil
@@ -197,7 +196,7 @@ func (*DaoService) GetAllTestsForLaunch(launchId int64) []*TestCaseEntity {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer rows.Close()
+	defer closeRows(rows)
 
 	testCases := make([]*TestCaseEntity, 0, 10)
 	for rows.Next() {
@@ -403,10 +402,10 @@ func (*DaoService) FindUser(login string, password string) *UserEntity {
 	rows, err := ExecuteSelect(
 		"SELECT user_id, login, password, is_active, first_name, last_name FROM users WHERE login = ? AND password = ?", login, password)
 	if err != nil {
-		log.Println(err)
+		log.Printf("Error selecting user with login = %v. Reason: %v\n", login, err)
 		return nil
 	}
-	defer rows.Close()
+	defer closeRows(rows)
 
 	if !rows.Next() {
 		return nil
@@ -425,7 +424,7 @@ func (*DaoService) GetUserById(userId int64) *UserEntity {
 		log.Println(err)
 		return nil
 	}
-	defer rows.Close()
+	defer closeRows(rows)
 
 	if !rows.Next() {
 		return nil

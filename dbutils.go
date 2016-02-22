@@ -24,7 +24,7 @@ func ConstructDbUrl() string {
 	connectionString := "file:" + fileName
 	connectionString += "?cache=shared"
 	connectionString += "&mode=rwc"
-	//connectionString += "&_busy_timeout=50000000"
+	connectionString += "&_busy_timeout=2000000"
 
 	return connectionString
 }
@@ -34,7 +34,9 @@ func initializeDriver() {
 }
 
 func OpenDbConnection() (*sql.DB, error) {
-	return sql.Open(DB_DRIVER, DB_CONNECTION_URL)
+	connection, err := sql.Open(DB_DRIVER, DB_CONNECTION_URL)
+	connection.SetMaxIdleConns(0)
+	return connection, err
 }
 
 func ExecuteSelect(query string, args ...interface{}) (*sql.Rows, error) {
@@ -43,7 +45,7 @@ func ExecuteSelect(query string, args ...interface{}) (*sql.Rows, error) {
 		log.Println("Failed to create the handle")
 		return nil, openErr
 	}
-	defer database.Close()
+	defer closeDb(database)
 
 	return database.Query(query, args...)
 }
@@ -54,7 +56,7 @@ func SelectOneRow(query string, args ...interface{}) *sql.Row {
 		log.Println("Failed to create the handle")
 		return nil
 	}
-	defer database.Close()
+	defer closeDb(database)
 
 	return database.QueryRow(query, args...)
 }
@@ -69,7 +71,7 @@ func ExecuteInsert(query string, args ...interface{}) (sql.Result, error) {
 		log.Println("Failed to create the handle")
 		return DummyResult{}, openErr
 	}
-	defer database.Close()
+	defer closeDb(database)
 
 	stmt, err := database.Prepare(query)
 	if err != nil {
@@ -88,24 +90,58 @@ func ExecuteDelete(query string, args ...interface{}) (sql.Result, error) {
 		log.Println("Failed to create the handle")
 		return DummyResult{}, openErr
 	}
-	defer database.Close()
+	defer closeDb(database)
 
-	fkOnRes, fkOnErr := database.Exec("PRAGMA foreign_keys=ON")
+	tx, txErr := database.Begin()
+	if txErr != nil {
+		log.Println(txErr)
+		return nil, txErr
+	}
+
+	fkOnRes, fkOnErr := tx.Exec("PRAGMA foreign_keys=ON")
 	if fkOnErr != nil {
 		log.Println(fkOnErr)
 		return fkOnRes, fkOnErr
 	}
 
-	stmt, err := database.Prepare(query)
+	stmt, err := tx.Prepare(query)
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
 	rows, execErr := stmt.Exec(args...)
-	stmt.Close()
+	if execErr != nil {
+		log.Printf("Unable execute DELETE statement. Reason: %v \n", execErr)
+		tx.Rollback()
+		return nil, execErr
+	}
+	closeErr := stmt.Close()
+	if closeErr != nil {
+		log.Println(closeErr)
+		tx.Rollback()
+		return nil, execErr
+	}
+
+	commitErr := tx.Commit()
+	if commitErr != nil {
+		log.Printf("Unable to commit DELETE transaction. Reason: %v \n", commitErr)
+		return nil, commitErr
+	}
 
 	return rows, execErr
+}
+
+func closeDb(db *sql.DB) {
+	if err := db.Close(); err != nil {
+		log.Printf("Unable to close DB connection. Reason:%v\n", err)
+	}
+}
+
+func closeRows(rows *sql.Rows) {
+	if err := rows.Close(); err != nil {
+		log.Printf("Unable to close Rows. Reason:%v\n", err)
+	}
 }
 
 func ParseSqlite3Date(str string) (time.Time, error) {
