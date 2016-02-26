@@ -7,9 +7,30 @@ import (
 	"strconv"
 )
 
-func serveRootEx(context *HttpContext) {
+type BranchesFilter struct {
+	LabelTemplate string
+}
 
-	branches, err := DAO.GetAllBranchesInfo()
+func (f *BranchesFilter) HasSomethingToFilter() bool {
+	return f.LabelTemplate != ""
+}
+
+func extractBranchesFilter(r *http.Request) *BranchesFilter {
+	filter := new(BranchesFilter)
+
+	lblTemplate := r.URL.Query().Get("label")
+	if lblTemplate != "" {
+		filter.LabelTemplate = lblTemplate
+	}
+
+	return filter
+}
+
+func serveShowBranches(context *HttpContext) {
+
+	filter := extractBranchesFilter(context.Req)
+
+	branches, err := DAO.GetAllBranchesInfo(filter)
 
 	if err != nil {
 		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -20,6 +41,14 @@ func serveRootEx(context *HttpContext) {
 	sort.Reverse(SortableSlice(branches))
 
 	rendRrr := RenderInCommonTemplateEx(context, branches, "list_branches.html")
+	if rendRrr != nil {
+		http.Error(context.Resp, rendRrr.Error(), http.StatusInternalServerError)
+	}
+}
+
+func serveFilterBranches(context *HttpContext) {
+
+	rendRrr := RenderInCommonTemplateEx(context, nil, "filter_branches.html")
 	if rendRrr != nil {
 		http.Error(context.Resp, rendRrr.Error(), http.StatusInternalServerError)
 	}

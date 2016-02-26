@@ -9,7 +9,7 @@ const DDL_TESTS_LAUNCHES = `
 CREATE TABLE IF NOT EXISTS test_launches (
 	launch_id integer PRIMARY KEY AUTOINCREMENT,
 	branch TEXT,
-	label TEST NULL,
+	label TEXT NULL,
 	creation_date DATE NOT NULL
 )`
 

@@ -1,0 +1,46 @@
+{{define "title"}}Filter branches{{end}}
+
+{{define "body"}}
+<h1>Filter branches</h1>
+
+<div>
+	<label for="checkLabelTemplate" >
+		<input id="checkLabelTemplate" name="checkLabelTemplate" type="checkbox" /> Only branches that contain runs with label that matches template
+	</label>
+	<div style="padding-left: 20px;">
+		<div id="labelTemplateValue" style="display: none;" >
+            <label for="labelTemplate">Label template:</label>
+            <input id="labelTemplate" name="labelTemplate" type="text" placeholder="template" />
+			<br/>
+			<span style="font-size:x-small;" >Example of label template: some-label-suffix*</span>
+        </div>
+	</div>
+	<br />
+
+</div>
+<button id="proceedBtn" >Proceed</button>
+
+<script>
+var templateCheck = document.getElementById("checkLabelTemplate");
+templateCheck.onchange = function(event) {
+	if (event.target.checked) {
+		document.getElementById("labelTemplateValue").style.display="block";
+	} else {
+		document.getElementById("labelTemplateValue").style.display="none";
+	}
+}
+
+document.getElementById("proceedBtn").onclick = function() {
+	var url = "/?";
+
+	console.log(document.getElementById("labelTemplate").checked);
+	if (document.getElementById("checkLabelTemplate").checked) {
+		url += ("label=" + document.getElementById("labelTemplate").value);
+	}
+	window.location = url;
+}
+
+</script>
+
+
+{{end}}

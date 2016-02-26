@@ -1,7 +1,9 @@
 package main
 
 import (
+	"database/sql"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -96,14 +98,25 @@ func (*DaoService) GetAllBranchesNames() []string {
 	return branchNames
 }
 
-func (*DaoService) GetAllBranchesInfo() ([]*BranchInfoEntity, error) {
-	connection, err := OpenDbConnection()
-	if err != nil {
-		return nil, err
-	}
-	defer closeDb(connection)
+func (*DaoService) getFilteredBranches(connection *sql.DB, filter *BranchesFilter) ([]*BranchInfoEntity, error) {
 
-	rows, err := connection.Query("SELECT DISTINCT branch FROM test_launches")
+	sqlText := "SELECT DISTINCT branch FROM test_launches"
+	params := make([]interface{}, 0, 5)
+
+	if filter != nil && filter.HasSomethingToFilter() {
+		sqlText += " WHERE"
+		if filter.LabelTemplate != "" {
+			sqlText += " label LIKE ?"
+			params = append(params, strings.Replace(filter.LabelTemplate, "*", "%", -1))
+		}
+	}
+
+	//	log.Printf("SQL: %v\n", sqlText)
+	//	for i, v := range params {
+	//		log.Printf("param %v = %v\n", i, v)
+	//	}
+
+	rows, err := connection.Query(sqlText, params...)
 	if err != nil {
 		return nil, err
 	}
@@ -119,6 +132,34 @@ func (*DaoService) GetAllBranchesInfo() ([]*BranchInfoEntity, error) {
 		}
 		branches = append(branches, bi)
 	}
+	return branches, nil
+}
+
+func (dao *DaoService) GetAllBranchesInfo(filter *BranchesFilter) ([]*BranchInfoEntity, error) {
+	connection, err := OpenDbConnection()
+	if err != nil {
+		return nil, err
+	}
+	defer closeDb(connection)
+
+	branches, err := dao.getFilteredBranches(connection, filter)
+
+	//	rows, err := connection.Query("SELECT DISTINCT branch FROM test_launches")
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	defer closeRows(rows)
+
+	//	branches := make([]*BranchInfoEntity, 0, 10)
+	//	for rows.Next() {
+	//		bi := new(BranchInfoEntity)
+	//		scanErr := rows.Scan(&bi.BranchName)
+	//		if scanErr != nil {
+	//			log.Println(scanErr)
+	//			continue
+	//		}
+	//		branches = append(branches, bi)
+	//	}
 
 	for i := 0; i < len(branches); i++ {
 		rows, err := connection.Query("SELECT launch_id, creation_date FROM test_launches WHERE branch = ? ORDER BY creation_date DESC LIMIT 1", branches[i].BranchName)
