@@ -51,6 +51,15 @@ CREATE TABLE IF NOT EXISTS users (
 	last_name TEXT NULL
 )`
 
+const SQL_REMOVED_ORPHAN_TESTS = `
+	DELETE FROM test_cases WHERE parent_launch_id IN (
+		SELECT DISTINCT parent_launch_id
+		FROM test_cases LEFT JOIN test_launches
+		ON parent_launch_id=launch_id
+		WHERE launch_id is NULL
+	)
+`
+
 func createDbIfNotExists() {
 
 	database, operErr := OpenDbConnection()
