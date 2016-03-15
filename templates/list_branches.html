@@ -8,12 +8,14 @@
 		<th>Branch name</th>
 		<th>Last changes date</th>
 		<th>Status</th>
+		<th>Actions</th>
 	</tr>
 {{range $index, $val := .}}
 	<tr {{if $val.LastLauchFailed}}class="failed"{{else}}class="passed"{{end}} >
 		<td><a href="/branch?branch_name={{$val.BranchName}}" >{{$val.BranchName}}</a></td>
 		<td>{{$val.CreationDate.Format "2006 Jan 02"}}</td>
 		<td>{{if $val.LastLauchFailed}}FAILING{{else}}HEALTHY{{end}}</td>
+		<td><a href="/delete-branch?branch={{$val.BranchName}}" title="Delete this branch" onclick="return confirm('Are you sure?')"><i class="fi-x red"></i></a></td>
 	</tr>
 {{end}}
 </table>

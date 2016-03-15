@@ -218,12 +218,9 @@ func serveDiffLaunchesEx(context *HttpContext) {
 func serveDeleteLaunchEx(context *HttpContext) {
 	session := context.Session
 	if !session.IsLoggedIn() {
-
 		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
-
 		if renderErr := RenderInCommonTemplateEx(context, errDto, "error.html"); renderErr != nil {
 			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
 		}
 		return
 	}
@@ -247,12 +244,39 @@ func serveDeleteLaunchEx(context *HttpContext) {
 		daoErr := HttpErrDTO{Code: http.StatusInternalServerError, Message: err.Error()}
 		if renderErr := RenderInCommonTemplateEx(context, daoErr, "error.html"); renderErr != nil {
 			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
 		}
 		return
 	}
 
 	http.Redirect(context.Resp, context.Req, "/branch?branch_name="+launchInfo.Branch, http.StatusMovedPermanently)
+}
+
+func serveDeleteBranch(context *HttpContext) {
+	session := context.Session
+	if !session.IsLoggedIn() {
+		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
+		if renderErr := RenderInCommonTemplateEx(context, errDto, "error.html"); renderErr != nil {
+			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	branchName := context.Req.URL.Query().Get("branch")
+	if branchName == "" {
+		http.Error(context.Resp, "Invalid branch name", http.StatusBadRequest)
+		return
+	}
+
+	err := DAO.DeleteBranch(branchName)
+	if err != nil {
+		daoErr := HttpErrDTO{Code: http.StatusInternalServerError, Message: err.Error()}
+		if renderErr := RenderInCommonTemplateEx(context, daoErr, "error.html"); renderErr != nil {
+			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	http.Redirect(context.Resp, context.Req, "/all-branches", http.StatusMovedPermanently)
 }
 
 func handleLoginEx(context *HttpContext) {

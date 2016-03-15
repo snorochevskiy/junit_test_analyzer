@@ -10,16 +10,20 @@ import (
 	"github.com/mattn/go-sqlite3"
 )
 
+const DB_FILE_NAME = "persist.db"
+
 var DB_CONNECTION_URL = ConstructDbUrl()
 
 var DB_DRIVER string
 
+type DbUtil struct {
+}
+
+var DB_UTIL = DbUtil{}
+
 func ConstructDbUrl() string {
-	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		log.Fatalln(err)
-	}
-	fileName := filepath.Join(dir, "persist.db")
+
+	fileName := calculateFullDbFilePath()
 
 	connectionString := "file:" + fileName
 	connectionString += "?cache=shared"
@@ -27,6 +31,15 @@ func ConstructDbUrl() string {
 	connectionString += "&_busy_timeout=2000000"
 
 	return connectionString
+}
+
+func calculateFullDbFilePath() string {
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return filepath.Join(dir, DB_FILE_NAME)
 }
 
 func initializeDriver() {
@@ -142,6 +155,18 @@ func closeRows(rows *sql.Rows) {
 	if err := rows.Close(); err != nil {
 		log.Printf("Unable to close Rows. Reason:%v\n", err)
 	}
+}
+
+func (*DbUtil) vacuum() error {
+	database, openErr := OpenDbConnection()
+	if openErr != nil {
+		log.Println("Failed to create the handle")
+		return openErr
+	}
+	defer closeDb(database)
+
+	_, err := database.Exec("VACUUM")
+	return err
 }
 
 func ParseSqlite3Date(str string) (time.Time, error) {

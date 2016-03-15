@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -72,6 +73,31 @@ func serveAddUser(context *HttpContext) {
 	}
 
 	err := RenderInCommonTemplateEx(context, nil, "add_user.html")
+	if err != nil {
+		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+}
+
+func serveManageDatabase(context *HttpContext) {
+
+	rendingObject := DbManagmentRO{}
+
+	action := context.Req.URL.Query().Get("action")
+	switch action {
+	case "vacuum":
+		rendingObject.ActionErr = DB_UTIL.vacuum()
+	}
+
+	dbFileName := calculateFullDbFilePath()
+	fileInfo, fInfoErr := os.Stat(dbFileName)
+	if fInfoErr != nil {
+		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
+
+	rendingObject.DbInfo.DbFileName = dbFileName
+	rendingObject.DbInfo.DbFileSize = fileInfo.Size()
+
+	err := RenderInCommonTemplateEx(context, rendingObject, "database_managment.html")
 	if err != nil {
 		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 	}

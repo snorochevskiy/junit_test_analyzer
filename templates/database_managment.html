@@ -1,0 +1,21 @@
+{{define "title"}}Manage Database{{end}}
+
+{{define "body"}}
+<h1>Manage Database</h1>
+
+{{if .ActionErr}}Action error: {{.ActionErr}} {{end}}
+
+<h2>Info</h2>
+
+<table border="1" class="jutra-table">
+	<tr> <td>Database file name</td> <td>{{.DbInfo.DbFileName}}</td> </tr>
+	<tr> <td>Database file size</td> <td>{{.DbInfo.DbFileSize}} bytes</td> </tr>
+</table>
+
+<h2>Actions</h2>
+
+<ul>
+	<li><a href="/admin/db-managment?action=vacuum">Vacuum</a> - defragment database</li>
+</ul>
+
+{{end}}

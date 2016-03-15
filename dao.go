@@ -439,6 +439,15 @@ func (*DaoService) DeleteLaunch(launchId int64) error {
 	return nil
 }
 
+func (*DaoService) DeleteBranch(branchName string) error {
+	_, err := ExecuteDelete("DELETE FROM test_launches WHERE branch = ?", branchName)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
 func (*DaoService) FindUser(login string, password string) *UserEntity {
 	rows, err := ExecuteSelect(
 		"SELECT user_id, login, password, is_active, first_name, last_name FROM users WHERE login = ? AND password = ?", login, password)

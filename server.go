@@ -13,6 +13,7 @@ func StartServer(port string) {
 
 	rh := RoutedHandler{}
 	rh.AddRoute("/", serveShowBranches)
+	rh.AddRoute("/all-branches", serveShowBranches)
 	rh.AddRoute("/filter-branches", serveFilterBranches)
 	rh.AddRoute("/branch", serveLaunchesInBranchEx)
 	rh.AddRoute("/launch", serverLaunchEx)
@@ -22,10 +23,12 @@ func StartServer(port string) {
 	rh.AddRoute("/dynamics", serverTestDymanicsEx)
 	rh.AddRoute("/diff", serveDiffLaunchesEx)
 	rh.AddRoute("/delete-launch", serveDeleteLaunchEx)
+	rh.AddRoute("/delete-branch", serveDeleteBranch)
 
 	rh.AddRoute("/admin/list-users", serveListUsersEx)
 	rh.AddRoute("/admin/edit-user", serveEditUserEx)
 	rh.AddRoute("/admin/add-user", serveAddUser)
+	rh.AddRoute("/admin/db-managment", serveManageDatabase)
 
 	rh.AddRoute("/login", handleLoginEx)
 	rh.AddRoute("/logout", handleLogoutEx)

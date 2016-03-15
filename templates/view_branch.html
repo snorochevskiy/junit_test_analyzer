@@ -46,7 +46,7 @@
 		<td>{{$lanch.Label}}</td>
 		<td>{{$lanch.FailedTestsNum}}</td>
 		<td>
-			<a href="/delete-launch?launch_id={{$lanch.Id}}"><i class="fi-x red"></i></a>
+			<a href="/delete-launch?launch_id={{$lanch.Id}}" title="Delete this test run" ><i class="fi-x red"></i></a>
 		</td>
 		<td><button id="fromBtn{{$lanch.Id}}" onclick="leftInDiff({{$lanch.Id}})" >from</button></td>
 		<td><button id="toBtn{{$lanch.Id}}" onclick="rightInDiff({{$lanch.Id}})" >&nbsp;&nbsp;to&nbsp;&nbsp;</button></td>

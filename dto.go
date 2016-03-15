@@ -49,3 +49,12 @@ type LaunchesDiffDTO struct {
 	SkippedToFailedTests []*TestCaseEntity
 	SkippedToPassedTests []*TestCaseEntity
 }
+
+type DbManagmentRO struct {
+	DbInfo    DatabaseInfo
+	ActionErr error
+}
+type DatabaseInfo struct {
+	DbFileName string
+	DbFileSize int64
+}
