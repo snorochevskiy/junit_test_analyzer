@@ -439,6 +439,21 @@ func (*DaoService) DeleteLaunch(launchId int64) error {
 	return nil
 }
 
+func (dao *DaoService) DeleteGivenLaunchWithAllPrevious(launchId int64) error {
+
+	launchInfo := dao.GetLaunchInfo(launchId)
+	if launchId == nil {
+		return
+	}
+
+	_, err := ExecuteDelete("DELETE FROM test_launches WHERE branch = ? AND creation_date <= ?", launchInfo.Branch, launchInfo.CreateDate)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
+}
+
 func (*DaoService) DeleteBranch(branchName string) error {
 	_, err := ExecuteDelete("DELETE FROM test_launches WHERE branch = ?", branchName)
 	if err != nil {
