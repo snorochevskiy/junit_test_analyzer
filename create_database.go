@@ -60,6 +60,14 @@ const SQL_REMOVED_ORPHAN_TESTS = `
 	)
 `
 
+const DDL_INDEX_TESTS_LAUNCHES_BRANCH = `
+	CREATE INDEX ind_test_launches_branch ON test_launches(branch)
+`
+
+const DDL_INDEX_TEST_CAST_PARENT_ID = `
+	CREATE INDEX ind_test_cases_prnt_id ON test_cases (parent_launch_id)
+`
+
 func createDbIfNotExists() {
 
 	database, operErr := OpenDbConnection()

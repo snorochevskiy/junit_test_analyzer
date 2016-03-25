@@ -251,6 +251,43 @@ func serveDeleteLaunchEx(context *HttpContext) {
 	http.Redirect(context.Resp, context.Req, "/branch?branch_name="+launchInfo.Branch, http.StatusMovedPermanently)
 }
 
+func serveDeleteThisAndPreviousLaunch(context *HttpContext) {
+	session := context.Session
+	if !session.IsLoggedIn() {
+		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
+		if renderErr := RenderInCommonTemplateEx(context, errDto, "error.html"); renderErr != nil {
+			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	launchIdParam := context.Req.URL.Query().Get("launch_id")
+	launchId, parseErr := strconv.Atoi(launchIdParam)
+	if parseErr != nil {
+		log.Println(parseErr)
+		http.Error(context.Resp, "Invalid launch id", http.StatusBadRequest)
+		return
+	}
+
+	launchInfo := DAO.GetLaunchInfo(int64(launchId))
+	if launchInfo == nil {
+		http.Error(context.Resp, "Unable to find launch "+launchIdParam, http.StatusBadRequest)
+		return
+	}
+
+	err := DAO.DeleteGivenLaunchWithAllPrevious(int64(launchId))
+	if err != nil {
+		daoErr := HttpErrDTO{Code: http.StatusInternalServerError, Message: err.Error()}
+		if renderErr := RenderInCommonTemplateEx(context, daoErr, "error.html"); renderErr != nil {
+			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	http.Redirect(context.Resp, context.Req, "/branch?branch_name="+launchInfo.Branch, http.StatusMovedPermanently)
+	//http.Redirect(context.Resp, context.Req, "/", http.StatusMovedPermanently)
+}
+
 func serveDeleteBranch(context *HttpContext) {
 	session := context.Session
 	if !session.IsLoggedIn() {

@@ -19,6 +19,15 @@ func serveListUsersEx(context *HttpContext) {
 
 func serveEditUserEx(context *HttpContext) {
 
+	session := context.Session
+	if !session.IsLoggedIn() {
+		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
+		if renderErr := RenderInCommonTemplateEx(context, errDto, "error.html"); renderErr != nil {
+			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+		return
+	}
+
 	if context.Req.Method == "POST" && context.Req.FormValue("userId") != "" && context.Req.FormValue("login") != "" {
 
 		user := extractUserFromFormData(context.Req)
@@ -57,6 +66,15 @@ func serveEditUserEx(context *HttpContext) {
 }
 
 func serveAddUser(context *HttpContext) {
+	session := context.Session
+	if !session.IsLoggedIn() {
+		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
+		if renderErr := RenderInCommonTemplateEx(context, errDto, "error.html"); renderErr != nil {
+			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+		return
+	}
+
 	if context.Req.Method == "POST" {
 		user := extractUserFromFormData(context.Req)
 

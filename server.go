@@ -23,6 +23,7 @@ func StartServer(port string) {
 	rh.AddRoute("/dynamics", serverTestDymanicsEx)
 	rh.AddRoute("/diff", serveDiffLaunchesEx)
 	rh.AddRoute("/delete-launch", serveDeleteLaunchEx)
+	rh.AddRoute("/delete-this-and-previous-launches", serveDeleteThisAndPreviousLaunch)
 	rh.AddRoute("/delete-branch", serveDeleteBranch)
 
 	rh.AddRoute("/admin/list-users", serveListUsersEx)

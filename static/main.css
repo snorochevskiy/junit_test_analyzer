@@ -9,12 +9,22 @@ a {
 
 a.buttonStyle {
 	background: #A9E2F3;
+	border-color : #000000;
 	border-style: solid;
 	border-radius: 5px;
 	border-width : 1px 1px 1px 1px;
 	text-decoration : none;
 	padding : 10px;
-	border-color : #000000;
+}
+
+a.buttonStyleSmall {
+	background: #DCDCDC;
+	border-color: #A9A9A9;
+	border-style: solid;
+	border-radius: 3px;
+	border-width : 1px 1px 1px 1px;
+	text-decoration : none;
+	padding : 2px;
 }
 
 .novisited-links a:visited {
@@ -39,6 +49,19 @@ table.jutra-table-big th {
 
 table.jutra-info-table td {
 	padding: 2px;
+}
+
+table.jutra-runs-table th {
+	padding: 10px;
+}
+
+table.jutra-runs-table td {
+	padding-top: 2px;
+	padding-bottom: 2px;
+	padding-left: 5px;
+	padding-right: 5px;
+	border-left: solid 1px;
+	border-right: solid 1px;
 }
 
 tr.failed {

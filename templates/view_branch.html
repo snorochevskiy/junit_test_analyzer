@@ -22,7 +22,7 @@
 	</a>
 </div>
 
-<table class="pure-table" >
+<table class="jutra-runs-table" >
 	<thead>
 		<tr>
 			<th>Launch No.</th>
@@ -44,9 +44,18 @@
 		<td>{{$lanch.Id}}</td>
 		<td><a href="launch?launch_id={{$lanch.Id}}">{{$lanch.CreateDate.Format "2006-01-02 15:04:05"}}</a></td>
 		<td>{{$lanch.Label}}</td>
-		<td>{{$lanch.FailedTestsNum}}</td>
+		<td><center>{{$lanch.FailedTestsNum}}</center></td>
 		<td>
-			<a href="/delete-launch?launch_id={{$lanch.Id}}" title="Delete this test run" ><i class="fi-x red"></i></a>
+			<center>
+				<a class="buttonStyleSmall" href="/delete-launch?launch_id={{$lanch.Id}}" title="Delete this test run" ><i class="fi-x red"></i></a>
+				&nbsp;&nbsp;
+				<a class="buttonStyleSmall"
+					href="/delete-this-and-previous-launches?launch_id={{$lanch.Id}}"
+					title="Delete this and previous runs"
+					onclick="return confirm('Are you sure?')" >
+						<i class="fi-arrow-down red"></i><i class="fi-x-circle red"></i>
+				</a>
+			</center>
 		</td>
 		<td><button id="fromBtn{{$lanch.Id}}" onclick="leftInDiff({{$lanch.Id}})" >from</button></td>
 		<td><button id="toBtn{{$lanch.Id}}" onclick="rightInDiff({{$lanch.Id}})" >&nbsp;&nbsp;to&nbsp;&nbsp;</button></td>
