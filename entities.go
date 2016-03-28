@@ -23,9 +23,12 @@ func (s SortableSlice) Less(i, j int) bool {
 }
 
 type BranchInfoEntity struct {
-	BranchName      string    `column:"branch"`
-	CreationDate    time.Time `column:"creation_date"`
-	LastLaunchId    int64     `column:"launch_id"`
+	BranchName   string    `column:"branch"`
+	CreationDate time.Time `column:"creation_date"`
+	LastLaunchId int64     `column:"launch_id"`
+
+	LastLaunchFailedNum sql.NullInt64 `column:"failed_num"`
+
 	LastLauchFailed bool
 }
 

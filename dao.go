@@ -162,7 +162,7 @@ func (dao *DaoService) GetAllBranchesInfo(filter *BranchesFilter) ([]*BranchInfo
 	//	}
 
 	for i := 0; i < len(branches); i++ {
-		rows, err := connection.Query("SELECT launch_id, creation_date FROM test_launches WHERE branch = ? ORDER BY creation_date DESC LIMIT 1", branches[i].BranchName)
+		rows, err := connection.Query("SELECT launch_id, creation_date, failed_num FROM test_launches WHERE branch = ? ORDER BY creation_date DESC LIMIT 1", branches[i].BranchName)
 		if err != nil {
 			log.Println(err)
 			continue
@@ -175,15 +175,19 @@ func (dao *DaoService) GetAllBranchesInfo(filter *BranchesFilter) ([]*BranchInfo
 		}
 		rows.Close()
 
-		failRows, err := connection.Query("SELECT test_case_id FROM test_cases JOIN test_case_failures ON test_case_id = parent_test_case_id WHERE parent_launch_id = ?", branches[i].LastLaunchId)
-		if err != nil {
-			log.Println(err)
-			continue
+		if !branches[i].LastLaunchFailedNum.Valid {
+			failRows, err := connection.Query("SELECT test_case_id FROM test_cases JOIN test_case_failures ON test_case_id = parent_test_case_id WHERE parent_launch_id = ?", branches[i].LastLaunchId)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			if failRows.Next() {
+				branches[i].LastLauchFailed = true
+			}
+			failRows.Close()
+		} else {
+			branches[i].LastLauchFailed = branches[i].LastLaunchFailedNum.Int64 > 0
 		}
-		if failRows.Next() {
-			branches[i].LastLauchFailed = true
-		}
-		failRows.Close()
 	}
 
 	return branches, nil
