@@ -104,6 +104,9 @@ func serveManageDatabase(context *HttpContext) {
 	switch action {
 	case "vacuum":
 		rendingObject.ActionErr = DB_UTIL.vacuum()
+
+	case "clean":
+		DAO.DeleteOrphans()
 	}
 
 	dbFileName := calculateFullDbFilePath()

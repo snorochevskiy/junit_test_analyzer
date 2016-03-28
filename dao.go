@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"log"
 	"strings"
-	"time"
 )
 
 type DaoService struct {
@@ -16,7 +15,7 @@ const TEST_CASE_STATUS_FAILED = "FAILED"
 const TEST_CASE_STATUS_SKIPPED = "SKIPPED"
 const TEST_CASE_STATUS_PASSED = "PASSED"
 
-func (*DaoService) PersistLaunch(branch string, testCases []*TestCase, launchTime time.Time, launchLabel string) error {
+func (*DaoService) PersistLaunch(launchInfo ParsedLaunchInfo) error {
 	connection, err := OpenDbConnection()
 	if err != nil {
 		return nil
@@ -28,7 +27,8 @@ func (*DaoService) PersistLaunch(branch string, testCases []*TestCase, launchTim
 		return err
 	}
 
-	res, err := transaction.Exec("INSERT INTO test_launches(branch, creation_date, label) values(?, ?, ?)", branch, launchTime, launchLabel)
+	res, err := transaction.Exec("INSERT INTO test_launches(branch, creation_date, label, test_num, failed_num, skipped_num, passed_num) values(?, ?, ?, ?, ?, ?, ?)",
+		launchInfo.Branch, launchInfo.LaunchTime, launchInfo.Label, launchInfo.OveralNum, launchInfo.FailedNum, launchInfo.SkippedNum, launchInfo.PassedNum)
 	if err != nil {
 		transaction.Rollback()
 		return err
@@ -51,7 +51,7 @@ func (*DaoService) PersistLaunch(branch string, testCases []*TestCase, launchTim
 		return err
 	}
 
-	for _, test := range testCases {
+	for _, test := range launchInfo.Tests {
 		res, err := testStmt.Exec(test.Name, test.Package, test.ClassName, test.Md5Hash, test.Status, launchId)
 		if err != nil {
 			transaction.Rollback()
@@ -460,6 +460,22 @@ func (*DaoService) DeleteBranch(branchName string) error {
 		log.Println(err)
 		return err
 	}
+	return nil
+}
+
+func (*DaoService) DeleteOrphans() error {
+	_, err := ExecuteDelete(SQL_REMOVED_ORPHAN_TESTS)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	_, err = ExecuteDelete(SQL_REMOVED_ORPHAN_FAILURES)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
 	return nil
 }
 

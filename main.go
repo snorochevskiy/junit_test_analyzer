@@ -18,7 +18,10 @@ func main() {
 		StartServer(serverConfig.Port)
 	} else if CLI.IsImporterMode() {
 		importConfig := CLI.ParseImportConfiguration()
-		ProcessAllResultsFiles(importConfig)
+		err := ProcessAllResultsFiles(importConfig)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	} else {
 		CLI.Promt()
 	}

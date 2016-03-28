@@ -54,14 +54,29 @@ func (testcase *TestCase) IsSkipped() bool {
 	return testcase.Skipped != nil
 }
 
-func ProcessAllResultsFiles(importConfig *ImportConfiguration) {
+type ParsedLaunchInfo struct {
+	Branch     string
+	LaunchTime time.Time
+	Label      string
+	Tests      []*TestCase
 
-	var launchTime = determineLaunchTime(importConfig)
+	FailedNum  int
+	SkippedNum int
+	PassedNum  int
+	OveralNum  int
+}
+
+func ProcessAllResultsFiles(importConfig *ImportConfiguration) error {
+
+	launchInfo := ParsedLaunchInfo{}
+	launchInfo.LaunchTime = determineLaunchTime(importConfig)
+	launchInfo.Branch = importConfig.Branch
+	launchInfo.Label = importConfig.LaunchLabel
 
 	reportFiles, reportFilesErr := ioutil.ReadDir(importConfig.FullDirPath)
 	if reportFilesErr != nil {
 		log.Panic(reportFilesErr)
-		return
+		return reportFilesErr
 	}
 
 	allTests := make([]*TestCase, 0, 100)
@@ -80,11 +95,25 @@ func ProcessAllResultsFiles(importConfig *ImportConfiguration) {
 				test := suite.TestCases[i]
 				prepareTestCase(&test)
 				allTests = append(allTests, &test)
+
+				if test.Status == TEST_CASE_STATUS_FAILED {
+					launchInfo.FailedNum++
+				}
+				if test.Status == TEST_CASE_STATUS_SKIPPED {
+					launchInfo.SkippedNum++
+				}
+				if test.Status == TEST_CASE_STATUS_PASSED {
+					launchInfo.PassedNum++
+				}
+				launchInfo.OveralNum++
 			}
 		}
 	}
 
-	DAO.PersistLaunch(importConfig.Branch, allTests, launchTime, importConfig.LaunchLabel)
+	launchInfo.Tests = allTests
+
+	return DAO.PersistLaunch(launchInfo)
+
 }
 
 func determineLaunchTime(importConfig *ImportConfiguration) time.Time {

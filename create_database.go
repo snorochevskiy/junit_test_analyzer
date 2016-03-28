@@ -10,7 +10,11 @@ CREATE TABLE IF NOT EXISTS test_launches (
 	launch_id integer PRIMARY KEY AUTOINCREMENT,
 	branch TEXT,
 	label TEXT NULL,
-	creation_date DATE NOT NULL
+	creation_date DATE NOT NULL,
+	test_num INTEGER,
+	failed_num INTEGER,
+	skipped_num INTEGER,
+	passed_num INTEGER
 )`
 
 const DDL_TEST_SUITES = `
@@ -57,6 +61,15 @@ const SQL_REMOVED_ORPHAN_TESTS = `
 		FROM test_cases LEFT JOIN test_launches
 		ON parent_launch_id=launch_id
 		WHERE launch_id is NULL
+	)
+
+`
+const SQL_REMOVED_ORPHAN_FAILURES = `
+	DELETE FROM test_case_failures WHERE parent_test_case_id IN (
+		SELECT DISTINCT parent_test_case_id
+		FROM test_case_failures LEFT JOIN test_cases
+		ON parent_test_case_id = test_case_id
+		WHERE test_case_id is NULL
 	)
 `
 

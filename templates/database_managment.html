@@ -15,7 +15,8 @@
 <h2>Actions</h2>
 
 <ul>
-	<li><a class="buttonStyleSmall" href="/admin/db-managment?action=vacuum">Vacuum</a> - defragment database</li>
+	<li><a class="buttonStyleSmall" href="/admin/db-managment?action=vacuum">Vacuum</a> - defragment database (Move actual data to cover empty space that occured in after DELETE command).</li>
+	<li><a class="buttonStyleSmall" href="/admin/db-managment?action=clean">Clean</a> - remove child records without parent. Suck record should not occue, but they do. Should be fixed in future.</li>
 </ul>
 
 {{end}}
