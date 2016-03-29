@@ -105,16 +105,16 @@ func ExecuteDelete(query string, args ...interface{}) (sql.Result, error) {
 	}
 	defer closeDb(database)
 
+	fkOnRes, fkOnErr := database.Exec("PRAGMA foreign_keys=ON")
+	if fkOnErr != nil {
+		log.Println(fkOnErr)
+		return fkOnRes, fkOnErr
+	}
+
 	tx, txErr := database.Begin()
 	if txErr != nil {
 		log.Println(txErr)
 		return nil, txErr
-	}
-
-	fkOnRes, fkOnErr := tx.Exec("PRAGMA foreign_keys=ON")
-	if fkOnErr != nil {
-		log.Println(fkOnErr)
-		return fkOnRes, fkOnErr
 	}
 
 	stmt, err := tx.Prepare(query)

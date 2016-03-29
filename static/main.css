@@ -76,6 +76,10 @@ tr.skipped {
 	background-color: #EFEFFB;
 }
 
+ul.jutra-list li {
+	margin: 10px;
+}
+
 .red {
 	color: red;
 }
