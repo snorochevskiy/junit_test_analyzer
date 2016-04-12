@@ -31,6 +31,8 @@ func StartServer(port string) {
 	rh.AddRoute("/admin/add-user", serveAddUser)
 	rh.AddRoute("/admin/db-managment", serveManageDatabase)
 
+	rh.AddRoute("/api/branches/status", serveApiBranchesStatus)
+
 	rh.AddRoute("/login", handleLoginEx)
 	rh.AddRoute("/logout", handleLogoutEx)
 

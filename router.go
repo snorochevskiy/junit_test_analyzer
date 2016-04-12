@@ -73,6 +73,12 @@ Loop:
 
 func (mh RoutedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.EscapedPath()
+
+	// TODO: fix favicon issue for apis
+	if strings.Contains(url, "favicon") {
+		return
+	}
+
 	route := mh.FindMatchingRoute(url)
 	if route == nil {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
