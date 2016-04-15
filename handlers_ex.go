@@ -248,6 +248,9 @@ func serveDeleteLaunchEx(context *HttpContext) {
 		return
 	}
 
+	// TODO : Find why orphans tests occure after launche is deleted
+	DAO.DeleteOrphans()
+
 	http.Redirect(context.Resp, context.Req, "/branch?branch_name="+launchInfo.Branch, http.StatusMovedPermanently)
 }
 
@@ -284,6 +287,9 @@ func serveDeleteThisAndPreviousLaunch(context *HttpContext) {
 		return
 	}
 
+	// TODO : Find why orphans tests occure after launche is deleted
+	DAO.DeleteOrphans()
+
 	http.Redirect(context.Resp, context.Req, "/branch?branch_name="+launchInfo.Branch, http.StatusMovedPermanently)
 	//http.Redirect(context.Resp, context.Req, "/", http.StatusMovedPermanently)
 }
@@ -312,6 +318,9 @@ func serveDeleteBranch(context *HttpContext) {
 		}
 		return
 	}
+
+	// TODO : Find why orphans tests occure after launche is deleted
+	DAO.DeleteOrphans()
 
 	http.Redirect(context.Resp, context.Req, "/all-branches", http.StatusMovedPermanently)
 }

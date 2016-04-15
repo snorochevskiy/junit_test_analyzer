@@ -120,6 +120,7 @@ func ExecuteDelete(query string, args ...interface{}) (sql.Result, error) {
 	stmt, err := tx.Prepare(query)
 	if err != nil {
 		log.Println(err)
+		tx.Rollback()
 		return nil, err
 	}
 
@@ -139,6 +140,7 @@ func ExecuteDelete(query string, args ...interface{}) (sql.Result, error) {
 	commitErr := tx.Commit()
 	if commitErr != nil {
 		log.Printf("Unable to commit DELETE transaction. Reason: %v \n", commitErr)
+		tx.Rollback()
 		return nil, commitErr
 	}
 
