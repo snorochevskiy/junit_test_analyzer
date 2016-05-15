@@ -3,17 +3,19 @@
 {{define "body"}}
 <h1>Test Launches</h1>
 
-<canvas style="margin:10px;" height="400" id='launchesPlot'>Update your browser</canvas>
+<canvas style="margin:10px;" height="400" id="launchesPlot" >Update your browser</canvas>
 <script src="/static/js/jutra_plot.js"></script>
 <script>
 	var canv = document.getElementById("launchesPlot");
 	canv.width = window.innerWidth * 0.95;
-	var dots = [
+	var testRuns = [
 {{range $index, $val := .}}
-		{x: {{$val.CreateDate.Unix}}, y: {{$val.FailedTestsNum}}, displayX: {{$val.CreateDate.Format "Jan 2"}} },
+		{date: {{$val.CreateDate.Unix}}, fails: {{$val.FailedTestsNum}} },
 {{end}}
 		];
-	DrawChart(canv, dots);
+	var chart = new Chart(canv, testRuns);
+	chart.culculatePlots();
+	chart.repaint();
 </script>
 
 <div id="diffLinkContainer" style="display: none; padding: 20px;">
