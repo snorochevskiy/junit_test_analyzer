@@ -22,6 +22,12 @@ func (s SortableSlice) Less(i, j int) bool {
 	return s[i].IsLess(s[j])
 }
 
+type ProjectEntity struct {
+	ProjectId   int64  `column:"project_id"`
+	Name        string `column:"project_name"`
+	Description string `column:"description"`
+}
+
 type BranchInfoEntity struct {
 	BranchName   string    `column:"branch"`
 	CreationDate time.Time `column:"creation_date"`

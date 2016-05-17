@@ -10,9 +10,10 @@ import (
 
 const PROMT = `
 To import JUnit reports to database:
-> jutra load-results <branch> <path-to-report-files> [--date=<from-fs | YYYY-MM-DD_HH:mm:ss>] [--label=<label>]
+> jutra load-results <path-to-report-files> [--project=<PROJECT>] [--branch=<BRANCH>] [--date=<from-fs | YYYY-MM-DD_HH:mm:ss>] [--label=<label>]
 Loads results from junit XML reports in specified folder
-	<branch>					- branch user in tests run (e.g. master, trunk)
+	<PROJECT>				- project that is tested
+	<BRANCH>					- branch used in tests run (e.g. master, trunk)
 	<path-to-report-files>	- folder with XML junit reports
 	--date					- specify launch time
 		* from-fs				-tells to take launch time as folder last mod time
@@ -36,6 +37,7 @@ type ServerConfiguration struct {
 }
 
 type ImportConfiguration struct {
+	Project               string
 	Branch                string
 	FullDirPath           string
 	LaunchLabel           string
@@ -48,7 +50,7 @@ func (*Cli) IsServerMode() bool {
 }
 
 func (*Cli) IsImporterMode() bool {
-	return len(os.Args) > 3 && os.Args[1] == "load-results"
+	return len(os.Args) >= 3 && os.Args[1] == "load-results"
 }
 
 func (*Cli) Promt() {
@@ -73,14 +75,13 @@ func (*Cli) ParseServerConfiguration() *ServerConfiguration {
 }
 
 func (*Cli) ParseImportConfiguration() *ImportConfiguration {
-	if len(os.Args) < 4 {
+	if len(os.Args) < 3 {
 		fmt.Println(PROMT)
 		os.Exit(1)
 	}
 
 	importConfig := new(ImportConfiguration)
-	importConfig.Branch = os.Args[2]
-	importConfig.FullDirPath = os.Args[3]
+	importConfig.FullDirPath = os.Args[2]
 
 	fileInfo, err := os.Stat(importConfig.FullDirPath)
 	if err != nil {
@@ -92,7 +93,7 @@ func (*Cli) ParseImportConfiguration() *ImportConfiguration {
 		os.Exit(1)
 	}
 
-	for i := 4; i < len(os.Args); i++ {
+	for i := 3; i < len(os.Args); i++ {
 		if strings.HasPrefix(os.Args[i], "--date=") {
 			timeStr := os.Args[i][strings.Index(os.Args[i], "=")+1:]
 			if timeStr == "from-fs" {
@@ -108,7 +109,14 @@ func (*Cli) ParseImportConfiguration() *ImportConfiguration {
 		} else if strings.HasPrefix(os.Args[i], "--label=") {
 			labelStr := os.Args[i][strings.Index(os.Args[i], "=")+1:]
 			importConfig.LaunchLabel = labelStr
+		} else if strings.HasPrefix(os.Args[i], "--project=") {
+			projectStr := os.Args[i][strings.Index(os.Args[i], "=")+1:]
+			importConfig.Project = projectStr
+		} else if strings.HasPrefix(os.Args[i], "--branch=") {
+			branchStr := os.Args[i][strings.Index(os.Args[i], "=")+1:]
+			importConfig.Branch = branchStr
 		}
 	}
+
 	return importConfig
 }

@@ -15,67 +15,43 @@ const TEST_CASE_STATUS_FAILED = "FAILED"
 const TEST_CASE_STATUS_SKIPPED = "SKIPPED"
 const TEST_CASE_STATUS_PASSED = "PASSED"
 
-func (*DaoService) PersistLaunch(launchInfo ParsedLaunchInfo) error {
-	connection, err := OpenDbConnection()
+func (*DaoService) GetAllProjects() []*ProjectEntity {
+	rows, err := ExecuteSelect("SELECT project_id, project_name FROM test_projects ORDER BY project_name")
 	if err != nil {
-		return nil
+		log.Println(err)
 	}
-	defer closeDb(connection)
+	defer rows.Close()
 
-	transaction, err := connection.Begin()
-	if err != nil {
-		return err
-	}
-
-	res, err := transaction.Exec("INSERT INTO test_launches(branch, creation_date, label, test_num, failed_num, skipped_num, passed_num) values(?, ?, ?, ?, ?, ?, ?)",
-		launchInfo.Branch, launchInfo.LaunchTime, launchInfo.Label, launchInfo.OveralNum, launchInfo.FailedNum, launchInfo.SkippedNum, launchInfo.PassedNum)
-	if err != nil {
-		transaction.Rollback()
-		return err
-	}
-	launchId, err := res.LastInsertId()
-	if err != nil {
-		transaction.Rollback()
-		return err
-	}
-
-	testStmt, err := transaction.Prepare("INSERT INTO test_cases(name, package, class_name, md5_hash, status, parent_launch_id) values(?, ?, ?, ?, ?, ?)")
-	if err != nil {
-		transaction.Rollback()
-		return err
-	}
-
-	failureStmt, err := transaction.Prepare("INSERT INTO test_case_failures(failure_type, failure_message, failure_text, parent_test_case_id) values(?, ?, ?, ?)")
-	if err != nil {
-		transaction.Rollback()
-		return err
-	}
-
-	for _, test := range launchInfo.Tests {
-		res, err := testStmt.Exec(test.Name, test.Package, test.ClassName, test.Md5Hash, test.Status, launchId)
-		if err != nil {
-			transaction.Rollback()
-			return err
+	projects := make([]*ProjectEntity, 0, 10)
+	for rows.Next() {
+		project := new(ProjectEntity)
+		scanErr := rows.Scan(&project)
+		if scanErr != nil {
+			log.Println(scanErr)
+			continue
 		}
-		if test.Failure != nil {
-			testId, err := res.LastInsertId()
-			if err != nil {
-				transaction.Rollback()
-				return err
-			}
-			_, failureAddErr := failureStmt.Exec(test.Failure.Type, test.Failure.Message, test.Failure.Text, testId)
-			if failureAddErr != nil {
-				transaction.Rollback()
-				return failureAddErr
-			}
-		}
+		projects = append(projects, project)
+	}
+	return projects
+}
+
+func (*DaoService) GetProjectIdByProjectName(porjectName string) (int64, error) {
+	rows, err := ExecuteSelect("SELECT project_id FROM test_projects WHERE project_name = ?", porjectName)
+	if err != nil {
+		log.Println(err)
+		return 0, err
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return 0, nil
 	}
 
-	if commitErr := transaction.Commit(); commitErr != nil {
-		log.Printf("Unable to commit new launch INSERT. Reason: %v\n", commitErr)
+	var projectId int64 = 0
+	if err := rows.Scan(&projectId); err != nil {
+		return 0, err
 	}
-
-	return nil
+	return projectId, nil
 }
 
 func (*DaoService) GetAllBranchesNames() []string {
@@ -111,11 +87,6 @@ func (*DaoService) getFilteredBranches(connection *sql.DB, filter *BranchesFilte
 		}
 	}
 
-	//	log.Printf("SQL: %v\n", sqlText)
-	//	for i, v := range params {
-	//		log.Printf("param %v = %v\n", i, v)
-	//	}
-
 	rows, err := connection.Query(sqlText, params...)
 	if err != nil {
 		return nil, err
@@ -143,23 +114,6 @@ func (dao *DaoService) GetAllBranchesInfo(filter *BranchesFilter) ([]*BranchInfo
 	defer closeDb(connection)
 
 	branches, err := dao.getFilteredBranches(connection, filter)
-
-	//	rows, err := connection.Query("SELECT DISTINCT branch FROM test_launches")
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	defer closeRows(rows)
-
-	//	branches := make([]*BranchInfoEntity, 0, 10)
-	//	for rows.Next() {
-	//		bi := new(BranchInfoEntity)
-	//		scanErr := rows.Scan(&bi.BranchName)
-	//		if scanErr != nil {
-	//			log.Println(scanErr)
-	//			continue
-	//		}
-	//		branches = append(branches, bi)
-	//	}
 
 	for i := 0; i < len(branches); i++ {
 		rows, err := connection.Query("SELECT launch_id, creation_date, failed_num FROM test_launches WHERE branch = ? ORDER BY creation_date DESC LIMIT 1", branches[i].BranchName)

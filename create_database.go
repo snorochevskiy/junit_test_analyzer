@@ -5,10 +5,27 @@ import (
 	"log"
 )
 
+const DDL_TESTS_PROJECTS = `
+CREATE TABLE IF NOT EXISTS test_projects (
+	project_id integer PRIMARY KEY AUTOINCREMENT,
+	project_name TEXT UNIQUE NOT NULL,
+	description TEXT NULL
+)`
+
+const DDL_TESTS_PROJECT_BRANCHES = `
+CREATE TABLE IF NOT EXISTS project_branches (
+	branch_id INTEGER PRIMARY KEY AUTOINCREMENT,
+	parent_project_id INTEGER NOT NULL REFERENCES test_projects(project_id),
+	branch_name TEXT NOT NULL
+)`
+
+//alter table test_launches add column parent_project_id INTEGER NULL REFERENCES test_projects(project_id);
+
 const DDL_TESTS_LAUNCHES = `
 CREATE TABLE IF NOT EXISTS test_launches (
 	launch_id integer PRIMARY KEY AUTOINCREMENT,
 	branch TEXT,
+	parent_branch_id INTEGER REFERENCES project_branches(branch_id),
 	label TEXT NULL,
 	creation_date DATE NOT NULL,
 	test_num INTEGER,
@@ -91,6 +108,14 @@ func createDbIfNotExists() {
 
 	if pingErr := database.Ping(); pingErr != nil {
 		log.Fatal("Failed to keep connection alive")
+	}
+
+	if _, err := database.Exec(DDL_TESTS_PROJECTS); err != nil {
+		log.Fatal(err)
+	}
+
+	if _, err := database.Exec(DDL_TESTS_PROJECT_BRANCHES); err != nil {
+		log.Fatal(err)
 	}
 
 	if _, err := database.Exec(DDL_TESTS_LAUNCHES); err != nil {

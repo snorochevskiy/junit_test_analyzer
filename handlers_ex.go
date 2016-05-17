@@ -28,10 +28,25 @@ func extractBranchesFilter(r *http.Request) *BranchesFilter {
 
 func serveShowBranches(context *HttpContext) {
 
+	projectIdStr := context.Req.URL.Query().Get("projectId")
+	var projectId int64
+	if projectIdStr == "" {
+		projectId, err := DAO.GetProjectIdByProjectName("")
+		if err != nil {
+			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+	} else {
+		projectId, err = strconv.ParseInt(projectIdStr)
+		if err != nil {
+			http.Error(context.Resp, projectIdStr+" is not a projectId", http.StatusInternalServerError)
+			return
+		}
+	}
+
 	filter := extractBranchesFilter(context.Req)
 
-	branches, err := DAO.GetAllBranchesInfo(filter)
-
+	branches, err := DAO.GetAllBranchesInfo(projectId, filter)
 	if err != nil {
 		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return

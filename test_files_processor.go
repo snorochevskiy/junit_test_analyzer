@@ -55,6 +55,7 @@ func (testcase *TestCase) IsSkipped() bool {
 }
 
 type ParsedLaunchInfo struct {
+	Project    string
 	Branch     string
 	LaunchTime time.Time
 	Label      string
@@ -72,6 +73,7 @@ func ProcessAllResultsFiles(importConfig *ImportConfiguration) error {
 	launchInfo.LaunchTime = determineLaunchTime(importConfig)
 	launchInfo.Branch = importConfig.Branch
 	launchInfo.Label = importConfig.LaunchLabel
+	launchInfo.Project = importConfig.Project
 
 	reportFiles, reportFilesErr := ioutil.ReadDir(importConfig.FullDirPath)
 	if reportFilesErr != nil {
