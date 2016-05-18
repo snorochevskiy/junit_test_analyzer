@@ -11,7 +11,7 @@
 	</tr>
 {{range $index, $val := .Projects}}
 	<tr>
-		<td>{{$val.Id}}</td>
+		<td><a href="/project/{{$val.Id}}" >{{$val.Id}}</a></td>
 		<td><a href="/project/{{$val.Id}}" >{{$val.Name}}</a></td>
 		<td>{{$val.Description}}</td>
 	</tr>

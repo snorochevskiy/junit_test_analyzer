@@ -116,6 +116,7 @@ func (mh RoutedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	matchingRoute := mh.FindMatchingRoute(url)
 	if matchingRoute == nil {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
 	}
 
 	session := SESSION_MANAGER.GetSessionForRequest(r)

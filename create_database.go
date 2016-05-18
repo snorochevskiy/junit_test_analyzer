@@ -19,12 +19,30 @@ CREATE TABLE IF NOT EXISTS project_branches (
 	branch_name TEXT NOT NULL
 )`
 
-//alter table test_launches add column parent_project_id INTEGER NULL REFERENCES test_projects(project_id);
+// alter table test_launches add column parent_branch_id INTEGER NULL REFERENCES project_branches(branch_id);
+// INSERT INTO test_projects (project_name, description) VALUES ('Integration Tests', 'Burberry REST API integration tests')
+// SELECT DISTINCT branch FROM test_launches;
+// INSERT INTO project_branches (parent_project_id, branch_name) VALUES
+// UPDATE test_launches SET parent_branch_id=(SELECT branch_id FROM project_branches WHERE branch_name='FB_BAU') WHERE branch = 'FB_BAU';
+
+//CREATE TABLE IF NOT EXISTS test_launches_1 (
+//	launch_id integer PRIMARY KEY AUTOINCREMENT,
+//	parent_branch_id INTEGER REFERENCES project_branches(branch_id),
+//	label TEXT NULL,
+//	creation_date DATE NOT NULL,
+//	test_num INTEGER,
+//	failed_num INTEGER,
+//	skipped_num INTEGER,
+//	passed_num INTEGER
+//)
+
+// INSERT INTO test_launches_1 select launch_id, parent_branch_id, label, creation_date, test_num, failed_num, skipped_num, passed_num FROM test_launches;
+// DROP TABLE  test_launches;
+// ALTER TABLE  test_launches_1 RENAME TO test_launches;
 
 const DDL_TESTS_LAUNCHES = `
 CREATE TABLE IF NOT EXISTS test_launches (
 	launch_id integer PRIMARY KEY AUTOINCREMENT,
-	branch TEXT,
 	parent_branch_id INTEGER REFERENCES project_branches(branch_id),
 	label TEXT NULL,
 	creation_date DATE NOT NULL,

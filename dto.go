@@ -18,7 +18,7 @@ type HttpErrDTO struct {
 type ViewLaunchDTO struct {
 	LaunchId int
 	Label    string
-	Branch   string
+	BranchId int64
 	Tests    []*TestCaseEntity
 
 	FailedTestsNum  int

@@ -71,6 +71,7 @@ func serveProject(context *HttpContext) {
 	rendRrr := RenderInCommonTemplateEx(context, branches, "list_branches.html")
 	if rendRrr != nil {
 		http.Error(context.Resp, rendRrr.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -79,18 +80,24 @@ func serveFilterBranches(context *HttpContext) {
 	rendRrr := RenderInCommonTemplateEx(context, nil, "filter_branches.html")
 	if rendRrr != nil {
 		http.Error(context.Resp, rendRrr.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
 func serveLaunchesInBranchEx(context *HttpContext) {
 
-	branchName := context.Req.URL.Query().Get("branch_name")
-
-	launches := DAO.GetAllLaunchesInBranch(branchName)
-
-	err := RenderInCommonTemplateEx(context, launches, "view_branch.html")
+	branchIdStr := context.Req.URL.Query().Get("branchId")
+	branchId, err := strconv.ParseInt(branchIdStr, 10, 64)
 	if err != nil {
+		http.Error(context.Resp, "Wrong branch ID", http.StatusInternalServerError)
+		return
+	}
+
+	launches := DAO.GetAllLaunchesInBranch(branchId)
+
+	if err := RenderInCommonTemplateEx(context, launches, "view_branch.html"); err != nil {
 		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -108,7 +115,7 @@ func serverLaunchEx(context *HttpContext) {
 
 	var dto ViewLaunchDTO
 	dto.LaunchId = launchId
-	dto.Branch = launchInfo.Branch
+	dto.BranchId = launchInfo.BranchId
 	dto.Label = launchInfo.Label
 	dto.Tests = testCases
 
@@ -279,7 +286,7 @@ func serveDeleteLaunchEx(context *HttpContext) {
 	// TODO : Find why orphans tests occure after launche is deleted
 	DAO.DeleteOrphans()
 
-	http.Redirect(context.Resp, context.Req, "/branch?branch_name="+launchInfo.Branch, http.StatusMovedPermanently)
+	http.Redirect(context.Resp, context.Req, "/branch?branchId="+strconv.FormatInt(launchInfo.BranchId, 10), http.StatusMovedPermanently)
 }
 
 func serveDeleteThisAndPreviousLaunch(context *HttpContext) {
@@ -318,7 +325,7 @@ func serveDeleteThisAndPreviousLaunch(context *HttpContext) {
 	// TODO : Find why orphans tests occure after launche is deleted
 	DAO.DeleteOrphans()
 
-	http.Redirect(context.Resp, context.Req, "/branch?branch_name="+launchInfo.Branch, http.StatusMovedPermanently)
+	http.Redirect(context.Resp, context.Req, "/branch?branchId="+strconv.FormatInt(launchInfo.BranchId, 10), http.StatusMovedPermanently)
 	//http.Redirect(context.Resp, context.Req, "/", http.StatusMovedPermanently)
 }
 
@@ -332,14 +339,20 @@ func serveDeleteBranch(context *HttpContext) {
 		return
 	}
 
-	branchName := context.Req.URL.Query().Get("branch")
-	if branchName == "" {
-		http.Error(context.Resp, "Invalid branch name", http.StatusBadRequest)
+	branchIdStr := context.PathParams["branchId"]
+	branchId, err := strconv.ParseInt(branchIdStr, 10, 64)
+	if err != nil {
+		http.Error(context.Resp, "Invalid branch ID", http.StatusBadRequest)
 		return
 	}
 
-	err := DAO.DeleteBranch(branchName)
+	projectId, err := DAO.GetParentProjectForBranch(branchId)
 	if err != nil {
+		http.Error(context.Resp, "Can't find project for given branch ID", http.StatusBadRequest)
+		return
+	}
+
+	if err := DAO.DeleteBranch(branchId); err != nil {
 		daoErr := HttpErrDTO{Code: http.StatusInternalServerError, Message: err.Error()}
 		if renderErr := RenderInCommonTemplateEx(context, daoErr, "error.html"); renderErr != nil {
 			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -350,7 +363,7 @@ func serveDeleteBranch(context *HttpContext) {
 	// TODO : Find why orphans tests occure after launche is deleted
 	DAO.DeleteOrphans()
 
-	http.Redirect(context.Resp, context.Req, "/all-branches", http.StatusMovedPermanently)
+	http.Redirect(context.Resp, context.Req, "/project/"+strconv.FormatInt(projectId, 10), http.StatusMovedPermanently)
 }
 
 func handleLoginEx(context *HttpContext) {

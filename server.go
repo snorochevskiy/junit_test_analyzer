@@ -25,7 +25,7 @@ func StartServer(port string) {
 	rh.AddRoute("/diff", serveDiffLaunchesEx)
 	rh.AddRoute("/delete-launch", serveDeleteLaunchEx)
 	rh.AddRoute("/delete-this-and-previous-launches", serveDeleteThisAndPreviousLaunch)
-	rh.AddRoute("/delete-branch", serveDeleteBranch)
+	rh.AddRoute("/delete-branch/:branchId", serveDeleteBranch)
 
 	rh.AddRoute("/admin/list-users", serveListUsersEx)
 	rh.AddRoute("/admin/edit-user", serveEditUserEx)

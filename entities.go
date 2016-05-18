@@ -10,7 +10,7 @@ type Comparable interface {
 	IsLess(Comparable) bool
 }
 
-type SortableSlice []*BranchInfoEntity
+type SortableSlice []*BranchDetailedInfoEntity
 
 func (s SortableSlice) Len() int {
 	return len(s)
@@ -34,31 +34,39 @@ type ProjectBranchEntity struct {
 	Name            string `column:"branch_name"`
 }
 
-type BranchInfoEntity struct {
-	BranchName   string    `column:"branch"`
+type BranchDetailedInfoEntity struct {
+	Id           int64
+	BranchName   string
 	CreationDate time.Time `column:"creation_date"`
 	LastLaunchId int64     `column:"launch_id"`
 
 	LastLaunchFailedNum sql.NullInt64 `column:"failed_num"`
 
-	LastLauchFailed bool
+	//LastLauchFailed bool
 }
 
-func (this *BranchInfoEntity) IsLess(other *BranchInfoEntity) bool {
+func (this *BranchDetailedInfoEntity) LastLauchFailed() bool {
+	if this.LastLaunchFailedNum.Valid && this.LastLaunchFailedNum.Int64 == 0 {
+		return false
+	}
+	return true
+}
+
+func (this *BranchDetailedInfoEntity) IsLess(other *BranchDetailedInfoEntity) bool {
 	return this.CreationDate.Before(other.CreationDate)
 }
 
 type TestLaunchEntity struct {
 	Id             int64     `column:"launch_id"`
-	Branch         string    `column:"branch"`
+	BranchId       int64     `column:"parent_branch_id"`
 	Label          string    `column:"label"`
 	CreateDate     time.Time `column:"creation_date"`
 	FailedTestsNum int
 }
 
 func (tle *TestLaunchEntity) String() string {
-	return fmt.Sprintf("TestLaunchEntity[Id=%v, Branch=%v, CreateDate=%v]",
-		tle.Id, tle.Branch, tle.CreateDate)
+	return fmt.Sprintf("TestLaunchEntity[Id=%v, BranchId=%v, CreateDate=%v]",
+		tle.Id, tle.BranchId, tle.CreateDate)
 }
 
 type TestCaseEntity struct {

@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"log"
-	"strings"
 )
 
 type DaoService struct {
@@ -35,23 +34,43 @@ func (*DaoService) GetAllProjects() []*ProjectEntity {
 	return projects
 }
 
-func (*DaoService) GetBranchesIdsInProject(projectId int64) ([]int64, error) {
-	rows, err := ExecuteSelect("SELECT branch_id FROM project_branches WHERE parent_project_id = ?", projectId)
+func (*DaoService) GetBranchesInProject(projectId int64) ([]*ProjectBranchEntity, error) {
+	rows, err := ExecuteSelect("SELECT branch_id, branch_name FROM project_branches WHERE parent_project_id = ?", projectId)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	branchIds := make([]int64, 0, 10)
+	branches := make([]*ProjectBranchEntity, 0, 10)
 	for rows.Next() {
-		var branchId int64
-		scanErr := rows.Scan(&branchId)
+		branch := new(ProjectBranchEntity)
+		scanErr := ScanStruct(rows, branch)
 		if scanErr != nil {
 			return nil, err
 		}
-		branchIds = append(branchIds, branchId)
+		branch.ParentProjectId = projectId
+		branches = append(branches, branch)
 	}
-	return branchIds, nil
+	return branches, nil
+}
+
+func (*DaoService) GetParentProjectForBranch(branchId int64) (int64, error) {
+	rows, err := ExecuteSelect("SELECT parent_project_id FROM project_branches WHERE branch_id = ?", branchId)
+	if err != nil {
+		log.Println(err)
+		return 0, err
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return 0, nil
+	}
+
+	var projectId int64 = 0
+	if err := rows.Scan(&projectId); err != nil {
+		return 0, err
+	}
+	return projectId, nil
 }
 
 func (*DaoService) GetProjectIdByProjectName(porjectName string) (int64, error) {
@@ -73,106 +92,80 @@ func (*DaoService) GetProjectIdByProjectName(porjectName string) (int64, error) 
 	return projectId, nil
 }
 
-func (*DaoService) GetAllBranchesNames() []string {
-	rows, err := ExecuteSelect("SELECT DISTINCT branch FROM test_launches ORDER BY branch")
-	if err != nil {
-		log.Println(err)
-	}
-	defer rows.Close()
+func (dao *DaoService) getFilteredBranchesIds(connection *sql.DB, projectId int64, filter *BranchesFilter) ([]*ProjectBranchEntity, error) {
 
-	branchNames := make([]string, 0, 10)
-	for rows.Next() {
-		var branchName string
-		scanErr := rows.Scan(&branchName)
-		if scanErr != nil {
-			log.Println(scanErr)
-			continue
-		}
-		branchNames = append(branchNames, branchName)
-	}
-	return branchNames
-}
-
-func (dao *DaoService) getFilteredBranches(connection *sql.DB, projectId int64, filter *BranchesFilter) ([]*BranchInfoEntity, error) {
-
-	//	branchIds, err := dao.GetBranchesIdsInProject(projectId)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-
-	sqlText := "SELECT DISTINCT branch FROM test_launches"
-	params := make([]interface{}, 0, 5)
-
-	if filter != nil && filter.HasSomethingToFilter() {
-		sqlText += " WHERE"
-		if filter.LabelTemplate != "" {
-			sqlText += " label LIKE ?"
-			params = append(params, strings.Replace(filter.LabelTemplate, "*", "%", -1))
-		}
-	}
-
-	rows, err := connection.Query(sqlText, params...)
+	branches, err := dao.GetBranchesInProject(projectId)
 	if err != nil {
 		return nil, err
 	}
-	defer closeRows(rows)
+	return branches, err
 
-	branches := make([]*BranchInfoEntity, 0, 10)
-	for rows.Next() {
-		bi := new(BranchInfoEntity)
-		scanErr := rows.Scan(&bi.BranchName)
-		if scanErr != nil {
-			log.Println(scanErr)
-			continue
-		}
-		branches = append(branches, bi)
-	}
-	return branches, nil
+	//  -- ONE MORE STEP TO FILTER IF REQUIRED
+	//	sqlText := "SELECT DISTINCT branch FROM test_launches"
+	//	params := make([]interface{}, 0, 5)
+
+	//	if filter != nil && filter.HasSomethingToFilter() {
+	//		sqlText += " WHERE"
+	//		if filter.LabelTemplate != "" {
+	//			sqlText += " label LIKE ?"
+	//			params = append(params, strings.Replace(filter.LabelTemplate, "*", "%", -1))
+	//		}
+	//	}
+
+	//	rows, err := connection.Query(sqlText, params...)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	defer closeRows(rows)
+
+	//	branches := make([]*BranchInfoEntity, 0, 10)
+	//	for rows.Next() {
+	//		bi := new(BranchInfoEntity)
+	//		scanErr := rows.Scan(&bi.BranchName)
+	//		if scanErr != nil {
+	//			log.Println(scanErr)
+	//			continue
+	//		}
+	//		branches = append(branches, bi)
+	//	}
+	//	return branches, nil
 }
 
-func (dao *DaoService) GetAllBranchesInfo(projectId int64, filter *BranchesFilter) ([]*BranchInfoEntity, error) {
+func (dao *DaoService) GetAllBranchesInfo(projectId int64, filter *BranchesFilter) ([]*BranchDetailedInfoEntity, error) {
 	connection, err := OpenDbConnection()
 	if err != nil {
 		return nil, err
 	}
 	defer closeDb(connection)
 
-	branches, err := dao.getFilteredBranches(connection, projectId, filter)
+	projectBranches, err := dao.getFilteredBranchesIds(connection, projectId, filter)
 
-	for i := 0; i < len(branches); i++ {
-		rows, err := connection.Query("SELECT launch_id, creation_date, failed_num FROM test_launches WHERE branch = ? ORDER BY creation_date DESC LIMIT 1", branches[i].BranchName)
+	branches := make([]*BranchDetailedInfoEntity, 0, 10)
+	for i := 0; i < len(projectBranches); i++ {
+		rows, err := connection.Query("SELECT launch_id, creation_date, failed_num FROM test_launches WHERE parent_branch_id = ? ORDER BY creation_date DESC LIMIT 1", projectBranches[i].Id)
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 		if rows.Next() {
-			scanErr := ScanStruct(rows, branches[i])
+			branchInfo := new(BranchDetailedInfoEntity)
+			scanErr := ScanStruct(rows, branchInfo)
 			if scanErr != nil {
 				log.Println(scanErr)
 			}
+			branchInfo.Id = projectBranches[i].Id
+			branchInfo.BranchName = projectBranches[i].Name
+			branches = append(branches, branchInfo)
 		}
 		rows.Close()
 
-		if !branches[i].LastLaunchFailedNum.Valid {
-			failRows, err := connection.Query("SELECT test_case_id FROM test_cases JOIN test_case_failures ON test_case_id = parent_test_case_id WHERE parent_launch_id = ?", branches[i].LastLaunchId)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			if failRows.Next() {
-				branches[i].LastLauchFailed = true
-			}
-			failRows.Close()
-		} else {
-			branches[i].LastLauchFailed = branches[i].LastLaunchFailedNum.Int64 > 0
-		}
 	}
 
 	return branches, nil
 }
 
-func (dao *DaoService) GetAllLaunchesInBranch(branch string) []*TestLaunchEntity {
-	rows, err := ExecuteSelect("SELECT launch_id, branch, label, creation_date FROM test_launches WHERE branch = ? ORDER BY creation_date", branch)
+func (dao *DaoService) GetAllLaunchesInBranch(branchId int64) []*TestLaunchEntity {
+	rows, err := ExecuteSelect("SELECT launch_id, label, creation_date FROM test_launches WHERE parent_branch_id = ? ORDER BY creation_date", branchId)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -192,7 +185,7 @@ func (dao *DaoService) GetAllLaunchesInBranch(branch string) []*TestLaunchEntity
 
 func (*DaoService) GetLaunchInfo(launchId int64) *TestLaunchEntity {
 
-	rows, err := ExecuteSelect("SELECT launch_id, branch, label, creation_date FROM test_launches WHERE launch_id = ?", launchId)
+	rows, err := ExecuteSelect("SELECT launch_id, parent_branch_id, label, creation_date FROM test_launches WHERE launch_id = ?", launchId)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -428,7 +421,7 @@ func (dao *DaoService) DeleteGivenLaunchWithAllPrevious(launchId int64) error {
 		return nil
 	}
 
-	_, err := ExecuteDelete("DELETE FROM test_launches WHERE branch = ? AND creation_date <= ?", launchInfo.Branch, launchInfo.CreateDate)
+	_, err := ExecuteDelete("DELETE FROM test_launches WHERE parent_branch_id = ? AND creation_date <= ?", launchInfo.BranchId, launchInfo.CreateDate)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -436,8 +429,8 @@ func (dao *DaoService) DeleteGivenLaunchWithAllPrevious(launchId int64) error {
 	return nil
 }
 
-func (*DaoService) DeleteBranch(branchName string) error {
-	_, err := ExecuteDelete("DELETE FROM test_launches WHERE branch = ?", branchName)
+func (*DaoService) DeleteBranch(branchId int64) error {
+	_, err := ExecuteDelete("DELETE FROM test_launches WHERE parent_branch_id = ?", branchId)
 	if err != nil {
 		log.Println(err)
 		return err

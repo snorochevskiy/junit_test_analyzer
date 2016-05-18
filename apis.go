@@ -22,7 +22,7 @@ func serveApiBranchesStatus(context *HttpContext) {
 	for _, v := range branches {
 		dto := new(BranchStatusDto)
 		dto.BranchName = v.BranchName
-		if v.LastLauchFailed {
+		if v.LastLauchFailed() {
 			dto.Status = "FAILED"
 		} else {
 			dto.Status = "HEALTHY"
