@@ -1,0 +1,21 @@
+{{define "title"}}Test Launches{{end}}
+
+{{define "body"}}
+<h1>Main page</h1>
+
+<table border="1" class="jutra-table-big novisited-links">
+	<tr>
+		<th>Project ID</th>
+		<th>Project Name</th>
+		<th>Description</th>
+	</tr>
+{{range $index, $val := .Projects}}
+	<tr>
+		<td>{{$val.Id}}</td>
+		<td><a href="/project/{{$val.Id}}" >{{$val.Name}}</a></td>
+		<td>{{$val.Description}}</td>
+	</tr>
+{{end}}
+</table>
+
+{{end}}

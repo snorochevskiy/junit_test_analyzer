@@ -23,9 +23,15 @@ func (s SortableSlice) Less(i, j int) bool {
 }
 
 type ProjectEntity struct {
-	ProjectId   int64  `column:"project_id"`
+	Id          int64  `column:"project_id"`
 	Name        string `column:"project_name"`
 	Description string `column:"description"`
+}
+
+type ProjectBranchEntity struct {
+	Id              int64  `column:"branch_id"`
+	ParentProjectId int64  `column:"parent_project_id"`
+	Name            string `column:"branch_name"`
 }
 
 type BranchInfoEntity struct {

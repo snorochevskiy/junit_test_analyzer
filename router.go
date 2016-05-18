@@ -12,14 +12,25 @@ const (
 	PATH_ELEMENT_VARIABLE
 )
 
+func (p PathElementType) String() string {
+	switch p {
+	case PATH_ELEMENT_EXACT:
+		return "PATH_ELEMENT_EXACT"
+	case PATH_ELEMENT_VARIABLE:
+		return "PATH_ELEMENT_VARIABLE"
+	}
+	return "UNKNOW"
+}
+
 type RoutedHandler struct {
 	Routes []Route
 }
 
 type HttpContext struct {
-	Session *Session
-	Req     *http.Request
-	Resp    http.ResponseWriter
+	Session    *Session
+	Req        *http.Request
+	Resp       http.ResponseWriter
+	PathParams map[string]string
 }
 
 type Route struct {
@@ -27,9 +38,25 @@ type Route struct {
 	Handler func(*HttpContext)
 }
 
+type MatchingRoute struct {
+	PathParams map[string]string
+	Handler    func(*HttpContext)
+}
+
+func (mr *MatchingRoute) AddPathParam(name string, value string) {
+	if mr.PathParams == nil {
+		mr.PathParams = make(map[string]string)
+	}
+	mr.PathParams[name] = value
+}
+
 type PathElement struct {
 	Val  string
 	Type PathElementType
+}
+
+func (pe PathElement) String() string {
+	return "PathElement[Val=" + pe.Val + ",Type=" + pe.Type.String() + "]"
 }
 
 func (mh *RoutedHandler) AddRoute(urlPattern string, handler func(*HttpContext)) error {
@@ -41,7 +68,7 @@ func (mh *RoutedHandler) AddRoute(urlPattern string, handler func(*HttpContext))
 	route := Route{Path: make([]PathElement, 0, 3), Handler: handler}
 
 	for _, v := range parts {
-		if strings.HasSuffix(v, ":") {
+		if strings.HasPrefix(v, ":") {
 			route.Path = append(route.Path, PathElement{Val: v[1:], Type: PATH_ELEMENT_VARIABLE})
 		} else {
 			route.Path = append(route.Path, PathElement{Val: v, Type: PATH_ELEMENT_EXACT})
@@ -52,21 +79,28 @@ func (mh *RoutedHandler) AddRoute(urlPattern string, handler func(*HttpContext))
 	return nil
 }
 
-func (mh *RoutedHandler) FindMatchingRoute(url string) *Route {
+func (mh *RoutedHandler) FindMatchingRoute(url string) *MatchingRoute {
 
 	urlParts := strings.Split(url, "/")
+	matchingRoute := new(MatchingRoute)
 
 Loop:
 	for _, v := range mh.Routes {
+
 		if len(urlParts) != len(v.Path) {
 			continue
 		}
+
 		for ind := 0; ind < len(urlParts); ind++ {
 			if urlParts[ind] != v.Path[ind].Val && v.Path[ind].Type != PATH_ELEMENT_VARIABLE {
 				continue Loop
 			}
+			if v.Path[ind].Type == PATH_ELEMENT_VARIABLE {
+				matchingRoute.AddPathParam(v.Path[ind].Val, urlParts[ind])
+			}
 		}
-		return &v
+		matchingRoute.Handler = v.Handler
+		return matchingRoute
 	}
 	return nil
 }
@@ -79,17 +113,18 @@ func (mh RoutedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	route := mh.FindMatchingRoute(url)
-	if route == nil {
+	matchingRoute := mh.FindMatchingRoute(url)
+	if matchingRoute == nil {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 	}
 
 	session := SESSION_MANAGER.GetSessionForRequest(r)
 	context := HttpContext{
-		Session: session,
-		Req:     r,
-		Resp:    w,
+		Session:    session,
+		Req:        r,
+		Resp:       w,
+		PathParams: matchingRoute.PathParams,
 	}
 
-	route.Handler(&context)
+	matchingRoute.Handler(&context)
 }

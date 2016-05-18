@@ -25,7 +25,7 @@ func (*DaoService) GetAllProjects() []*ProjectEntity {
 	projects := make([]*ProjectEntity, 0, 10)
 	for rows.Next() {
 		project := new(ProjectEntity)
-		scanErr := rows.Scan(&project)
+		scanErr := ScanStruct(rows, project)
 		if scanErr != nil {
 			log.Println(scanErr)
 			continue
@@ -33,6 +33,25 @@ func (*DaoService) GetAllProjects() []*ProjectEntity {
 		projects = append(projects, project)
 	}
 	return projects
+}
+
+func (*DaoService) GetBranchesIdsInProject(projectId int64) ([]int64, error) {
+	rows, err := ExecuteSelect("SELECT branch_id FROM project_branches WHERE parent_project_id = ?", projectId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	branchIds := make([]int64, 0, 10)
+	for rows.Next() {
+		var branchId int64
+		scanErr := rows.Scan(&branchId)
+		if scanErr != nil {
+			return nil, err
+		}
+		branchIds = append(branchIds, branchId)
+	}
+	return branchIds, nil
 }
 
 func (*DaoService) GetProjectIdByProjectName(porjectName string) (int64, error) {
@@ -74,7 +93,12 @@ func (*DaoService) GetAllBranchesNames() []string {
 	return branchNames
 }
 
-func (*DaoService) getFilteredBranches(connection *sql.DB, filter *BranchesFilter) ([]*BranchInfoEntity, error) {
+func (dao *DaoService) getFilteredBranches(connection *sql.DB, projectId int64, filter *BranchesFilter) ([]*BranchInfoEntity, error) {
+
+	//	branchIds, err := dao.GetBranchesIdsInProject(projectId)
+	//	if err != nil {
+	//		return nil, err
+	//	}
 
 	sqlText := "SELECT DISTINCT branch FROM test_launches"
 	params := make([]interface{}, 0, 5)
@@ -106,14 +130,14 @@ func (*DaoService) getFilteredBranches(connection *sql.DB, filter *BranchesFilte
 	return branches, nil
 }
 
-func (dao *DaoService) GetAllBranchesInfo(filter *BranchesFilter) ([]*BranchInfoEntity, error) {
+func (dao *DaoService) GetAllBranchesInfo(projectId int64, filter *BranchesFilter) ([]*BranchInfoEntity, error) {
 	connection, err := OpenDbConnection()
 	if err != nil {
 		return nil, err
 	}
 	defer closeDb(connection)
 
-	branches, err := dao.getFilteredBranches(connection, filter)
+	branches, err := dao.getFilteredBranches(connection, projectId, filter)
 
 	for i := 0; i < len(branches); i++ {
 		rows, err := connection.Query("SELECT launch_id, creation_date, failed_num FROM test_launches WHERE branch = ? ORDER BY creation_date DESC LIMIT 1", branches[i].BranchName)

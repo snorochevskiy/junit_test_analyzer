@@ -12,8 +12,9 @@ func StartServer(port string) {
 	http.Handle("/static/", maxAgeHandler(3600, http.StripPrefix("/static/", fs)))
 
 	rh := RoutedHandler{}
-	rh.AddRoute("/", serveShowBranches)
-	rh.AddRoute("/all-branches", serveShowBranches)
+	rh.AddRoute("/", serveMainPage)
+	rh.AddRoute("/project/:projectId", serveProject)
+	//rh.AddRoute("/all-branches", serveShowBranches)
 	rh.AddRoute("/filter-branches", serveFilterBranches)
 	rh.AddRoute("/branch", serveLaunchesInBranchEx)
 	rh.AddRoute("/launch", serverLaunchEx)

@@ -12,7 +12,7 @@ type BranchStatusDto struct {
 }
 
 func serveApiBranchesStatus(context *HttpContext) {
-	branches, daoErr := DAO.GetAllBranchesInfo(nil)
+	branches, daoErr := DAO.GetAllBranchesInfo(0, nil)
 	if daoErr != nil {
 		http.Error(context.Resp, daoErr.Error(), http.StatusInternalServerError)
 		return

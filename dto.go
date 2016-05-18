@@ -58,3 +58,7 @@ type DatabaseInfo struct {
 	DbFileName string
 	DbFileSize int64
 }
+
+type MainPageRO struct {
+	Projects []*ProjectEntity
+}

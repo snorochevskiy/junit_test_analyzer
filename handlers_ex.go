@@ -26,18 +26,31 @@ func extractBranchesFilter(r *http.Request) *BranchesFilter {
 	return filter
 }
 
-func serveShowBranches(context *HttpContext) {
+func serveMainPage(context *HttpContext) {
+	projects := DAO.GetAllProjects()
 
-	projectIdStr := context.Req.URL.Query().Get("projectId")
+	var ro MainPageRO
+	ro.Projects = projects
+
+	rendRrr := RenderInCommonTemplateEx(context, ro, "main_page.html")
+	if rendRrr != nil {
+		http.Error(context.Resp, rendRrr.Error(), http.StatusInternalServerError)
+	}
+}
+
+func serveProject(context *HttpContext) {
+
+	projectIdStr := context.PathParams["projectId"]
 	var projectId int64
+	var err error
 	if projectIdStr == "" {
-		projectId, err := DAO.GetProjectIdByProjectName("")
+		projectId, err = DAO.GetProjectIdByProjectName("")
 		if err != nil {
 			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 	} else {
-		projectId, err = strconv.ParseInt(projectIdStr)
+		projectId, err = strconv.ParseInt(projectIdStr, 10, 64)
 		if err != nil {
 			http.Error(context.Resp, projectIdStr+" is not a projectId", http.StatusInternalServerError)
 			return
