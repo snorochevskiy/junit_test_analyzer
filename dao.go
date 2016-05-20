@@ -14,10 +14,10 @@ const TEST_CASE_STATUS_FAILED = "FAILED"
 const TEST_CASE_STATUS_SKIPPED = "SKIPPED"
 const TEST_CASE_STATUS_PASSED = "PASSED"
 
-func (*DaoService) GetAllProjects() []*ProjectEntity {
-	rows, err := ExecuteSelect("SELECT project_id, project_name FROM test_projects ORDER BY project_name")
+func (*DaoService) GetAllProjects() ([]*ProjectEntity, error) {
+	rows, err := ExecuteSelect("SELECT project_id, project_name, description FROM test_projects ORDER BY project_name")
 	if err != nil {
-		log.Println(err)
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -31,7 +31,7 @@ func (*DaoService) GetAllProjects() []*ProjectEntity {
 		}
 		projects = append(projects, project)
 	}
-	return projects
+	return projects, nil
 }
 
 func (*DaoService) GetBranchesInProject(projectId int64) ([]*ProjectBranchEntity, error) {
@@ -426,13 +426,48 @@ func (dao *DaoService) DeleteGivenLaunchWithAllPrevious(launchId int64) error {
 		log.Println(err)
 		return err
 	}
+
 	return nil
 }
 
-func (*DaoService) DeleteBranch(branchId int64) error {
+func (dao *DaoService) DeleteAllLaunchesInBranch(branchId int64) error {
 	_, err := ExecuteDelete("DELETE FROM test_launches WHERE parent_branch_id = ?", branchId)
 	if err != nil {
-		log.Println(err)
+		return err
+	}
+
+	if err := dao.DeleteBranch(branchId); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (dao *DaoService) DeleteBranchIfEmpty(branchId int64) error {
+	rows, err := ExecuteSelect("SELECT Count(*) FROM test_launches WHERE parent_branch_id = ?", branchId)
+	if err != nil {
+		return err
+	}
+
+	rows.Next()
+	var numberOfLaunches int
+	rows.Scan(&numberOfLaunches)
+	rows.Close()
+
+	if numberOfLaunches > 0 {
+		return nil
+	}
+
+	if err := dao.DeleteBranch(branchId); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (dao *DaoService) DeleteBranch(branchId int64) error {
+	_, err := ExecuteDelete("DELETE FROM project_branches WHERE branch_id = ?", branchId)
+	if err != nil {
 		return err
 	}
 	return nil
@@ -441,13 +476,11 @@ func (*DaoService) DeleteBranch(branchId int64) error {
 func (*DaoService) DeleteOrphans() error {
 	_, err := ExecuteDelete(SQL_REMOVED_ORPHAN_TESTS)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 
 	_, err = ExecuteDelete(SQL_REMOVED_ORPHAN_FAILURES)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 

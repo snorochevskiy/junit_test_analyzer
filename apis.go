@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 )
 
 type BranchStatusDto struct {
@@ -11,8 +12,33 @@ type BranchStatusDto struct {
 	Date       string `json:"date"`
 }
 
+func serveApiListProjects(context *HttpContext) {
+	projects, err := DAO.GetAllProjects()
+	if err != nil {
+		http.Error(context.Resp, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response, jsonErr := json.Marshal(projects)
+	if jsonErr != nil {
+		http.Error(context.Resp, jsonErr.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	context.Resp.Header().Set("Content-Type", "text/json")
+	context.Resp.Write(response)
+}
+
 func serveApiBranchesStatus(context *HttpContext) {
-	branches, daoErr := DAO.GetAllBranchesInfo(0, nil)
+
+	projectIdStr := context.PathParams["projectId"]
+	projectId, err := strconv.ParseInt(projectIdStr, 10, 64)
+	if err != nil {
+		http.Error(context.Resp, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	branches, daoErr := DAO.GetAllBranchesInfo(projectId, nil)
 	if daoErr != nil {
 		http.Error(context.Resp, daoErr.Error(), http.StatusInternalServerError)
 		return

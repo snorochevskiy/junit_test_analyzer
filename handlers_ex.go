@@ -27,14 +27,18 @@ func extractBranchesFilter(r *http.Request) *BranchesFilter {
 }
 
 func serveMainPage(context *HttpContext) {
-	projects := DAO.GetAllProjects()
+	projects, err := DAO.GetAllProjects()
+	if err != nil {
+		http.Error(context.Resp, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	var ro MainPageRO
 	ro.Projects = projects
 
-	rendRrr := RenderInCommonTemplateEx(context, ro, "main_page.html")
-	if rendRrr != nil {
+	if rendRrr := RenderInCommonTemplateEx(context, ro, "main_page.html"); rendRrr != nil {
 		http.Error(context.Resp, rendRrr.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -300,20 +304,20 @@ func serveDeleteThisAndPreviousLaunch(context *HttpContext) {
 	}
 
 	launchIdParam := context.Req.URL.Query().Get("launch_id")
-	launchId, parseErr := strconv.Atoi(launchIdParam)
+	launchId, parseErr := strconv.ParseInt(launchIdParam, 10, 64)
 	if parseErr != nil {
 		log.Println(parseErr)
 		http.Error(context.Resp, "Invalid launch id", http.StatusBadRequest)
 		return
 	}
 
-	launchInfo := DAO.GetLaunchInfo(int64(launchId))
+	launchInfo := DAO.GetLaunchInfo(launchId)
 	if launchInfo == nil {
-		http.Error(context.Resp, "Unable to find launch "+launchIdParam, http.StatusBadRequest)
+		http.Error(context.Resp, "Can't find run", http.StatusBadRequest)
 		return
 	}
 
-	err := DAO.DeleteGivenLaunchWithAllPrevious(int64(launchId))
+	err := DAO.DeleteGivenLaunchWithAllPrevious(launchId)
 	if err != nil {
 		daoErr := HttpErrDTO{Code: http.StatusInternalServerError, Message: err.Error()}
 		if renderErr := RenderInCommonTemplateEx(context, daoErr, "error.html"); renderErr != nil {
@@ -352,7 +356,7 @@ func serveDeleteBranch(context *HttpContext) {
 		return
 	}
 
-	if err := DAO.DeleteBranch(branchId); err != nil {
+	if err := DAO.DeleteAllLaunchesInBranch(branchId); err != nil {
 		daoErr := HttpErrDTO{Code: http.StatusInternalServerError, Message: err.Error()}
 		if renderErr := RenderInCommonTemplateEx(context, daoErr, "error.html"); renderErr != nil {
 			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
