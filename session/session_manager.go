@@ -1,4 +1,4 @@
-package main
+package session
 
 import (
 	"crypto/rand"
@@ -10,16 +10,21 @@ import (
 
 const SID_COOKIE_NAME = "SID"
 
-var SESSION_MANAGER SessionManagerService = SessionManagerService{sessionMap: make(map[string]*Session)}
+var sessionMap map[string]*Session
 
 func init() {
-
+	sessionMap = make(map[string]*Session)
 }
 
 type Session struct {
 	Sid     string
-	User    *UserEntity
+	User    interface{} //*UserEntity
 	Created time.Time
+}
+
+type UserRenderInfo struct {
+	LoggedIn bool
+	Details  interface{}
 }
 
 func (session *Session) IsLoggedIn() bool {
@@ -41,28 +46,28 @@ type SessionManagerService struct {
 	sessionMap map[string]*Session
 }
 
-func (sessionManager *SessionManagerService) InitSession(w http.ResponseWriter, userInfo *UserEntity) {
-	generatedSid := sessionManager.generateSid()
+func InitSession(w http.ResponseWriter, userInfo interface{}) { //*UserEntity) {
+	generatedSid := generateSid()
 	session := &Session{Sid: generatedSid}
 	session.User = userInfo
 
-	sessionManager.sessionMap[generatedSid] = session
+	sessionMap[generatedSid] = session
 
 	cookie := &http.Cookie{Name: SID_COOKIE_NAME, Value: session.Sid, MaxAge: 0}
 	http.SetCookie(w, cookie)
 }
 
-func (sessionManager *SessionManagerService) ClearSession(r *http.Request, w http.ResponseWriter) {
+func ClearSession(r *http.Request, w http.ResponseWriter) {
 	cookie, err := r.Cookie(SID_COOKIE_NAME)
 	if err != nil {
 		return
 	}
-	delete(sessionManager.sessionMap, cookie.Value)
+	delete(sessionMap, cookie.Value)
 
 	http.SetCookie(w, &http.Cookie{Name: SID_COOKIE_NAME, Value: "", Path: "/", MaxAge: -1})
 }
 
-func (manager *SessionManagerService) generateSid() string {
+func generateSid() string {
 	b := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, b); err != nil {
 		return ""
@@ -70,7 +75,7 @@ func (manager *SessionManagerService) generateSid() string {
 	return base64.URLEncoding.EncodeToString(b)
 }
 
-func (manager *SessionManagerService) GetSessionForRequest(r *http.Request) *Session {
+func GetSessionForRequest(r *http.Request) *Session {
 
 	cookie, err := r.Cookie(SID_COOKIE_NAME)
 	if err != nil {
@@ -78,7 +83,7 @@ func (manager *SessionManagerService) GetSessionForRequest(r *http.Request) *Ses
 	}
 	sid := cookie.Value
 
-	session, contains := manager.sessionMap[sid]
+	session, contains := sessionMap[sid]
 	if contains {
 		return session
 	} else {

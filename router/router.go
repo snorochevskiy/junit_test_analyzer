@@ -1,6 +1,7 @@
-package main
+package router
 
 import (
+	"jutra/session"
 	"net/http"
 	"strings"
 )
@@ -27,7 +28,7 @@ type RoutedHandler struct {
 }
 
 type HttpContext struct {
-	Session    *Session
+	Session    *session.Session
 	Req        *http.Request
 	Resp       http.ResponseWriter
 	PathParams map[string]string
@@ -119,7 +120,7 @@ func (mh RoutedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session := SESSION_MANAGER.GetSessionForRequest(r)
+	session := session.GetSessionForRequest(r)
 	context := HttpContext{
 		Session:    session,
 		Req:        r,

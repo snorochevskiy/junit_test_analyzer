@@ -1,6 +1,7 @@
 package main
 
 import (
+	"jutra/session"
 	"net/http"
 )
 
@@ -23,7 +24,7 @@ type IValidator interface {
 }
 
 type ISessionProvider interface {
-	GetSessionForRequest(*http.Request) *Session
+	GetSessionForRequest(*http.Request) *session.Session
 }
 
 type User struct {
@@ -52,7 +53,7 @@ func (wrapper *Wrapper) Wrap() func(http.ResponseWriter, *http.Request) {
 
 		session := wrapper.SessionProvider.GetSessionForRequest(r)
 		if session != nil {
-			context.User = session.User
+			context.User = session.User.(*UserEntity)
 		}
 
 		for _, validator := range wrapper.Validators {

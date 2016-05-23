@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"html/template"
+	"jutra/router"
 	"log"
 	"net/http"
 	"os"
@@ -59,7 +60,7 @@ func RenderInCommonTemplate(w http.ResponseWriter, dto interface{}, templateName
 	return nil
 }
 
-func RenderInCommonTemplateEx(context *HttpContext, dto interface{}, templateName string) error {
+func RenderInCommonTemplateEx(context *router.HttpContext, dto interface{}, templateName string) error {
 	tmplt, err := createCommonTemplate(templateName)
 	if err != nil {
 		log.Println(err)

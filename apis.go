@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"jutra/router"
 	"net/http"
 	"strconv"
 )
@@ -12,7 +13,7 @@ type BranchStatusDto struct {
 	Date       string `json:"date"`
 }
 
-func serveApiListProjects(context *HttpContext) {
+func serveApiListProjects(context *router.HttpContext) {
 	projects, err := DAO.GetAllProjects()
 	if err != nil {
 		http.Error(context.Resp, err.Error(), http.StatusInternalServerError)
@@ -29,7 +30,7 @@ func serveApiListProjects(context *HttpContext) {
 	context.Resp.Write(response)
 }
 
-func serveApiBranchesStatus(context *HttpContext) {
+func serveApiBranchesStatus(context *router.HttpContext) {
 
 	projectIdStr := context.PathParams["projectId"]
 	projectId, err := strconv.ParseInt(projectIdStr, 10, 64)

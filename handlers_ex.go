@@ -1,6 +1,8 @@
 package main
 
 import (
+	"jutra/router"
+	sm "jutra/session"
 	"log"
 	"net/http"
 	"sort"
@@ -26,7 +28,7 @@ func extractBranchesFilter(r *http.Request) *BranchesFilter {
 	return filter
 }
 
-func serveMainPage(context *HttpContext) {
+func serveMainPage(context *router.HttpContext) {
 	projects, err := DAO.GetAllProjects()
 	if err != nil {
 		http.Error(context.Resp, err.Error(), http.StatusInternalServerError)
@@ -42,7 +44,7 @@ func serveMainPage(context *HttpContext) {
 	}
 }
 
-func serveProject(context *HttpContext) {
+func serveProject(context *router.HttpContext) {
 
 	projectIdStr := context.PathParams["projectId"]
 	var projectId int64
@@ -79,7 +81,7 @@ func serveProject(context *HttpContext) {
 	}
 }
 
-func serveFilterBranches(context *HttpContext) {
+func serveFilterBranches(context *router.HttpContext) {
 
 	rendRrr := RenderInCommonTemplateEx(context, nil, "filter_branches.html")
 	if rendRrr != nil {
@@ -88,7 +90,7 @@ func serveFilterBranches(context *HttpContext) {
 	}
 }
 
-func serveLaunchesInBranchEx(context *HttpContext) {
+func serveLaunchesInBranchEx(context *router.HttpContext) {
 
 	branchIdStr := context.Req.URL.Query().Get("branchId")
 	branchId, err := strconv.ParseInt(branchIdStr, 10, 64)
@@ -105,7 +107,7 @@ func serveLaunchesInBranchEx(context *HttpContext) {
 	}
 }
 
-func serverLaunchEx(context *HttpContext) {
+func serverLaunchEx(context *router.HttpContext) {
 	launchIdParam := context.Req.URL.Query().Get("launch_id")
 	launchId, parseErr := strconv.Atoi(launchIdParam)
 	if parseErr != nil {
@@ -133,7 +135,7 @@ func serverLaunchEx(context *HttpContext) {
 	}
 }
 
-func servePackageEx(context *HttpContext) {
+func servePackageEx(context *router.HttpContext) {
 	launchIdParam := context.Req.URL.Query().Get("launch_id")
 	launchId, parseErr := strconv.Atoi(launchIdParam)
 	if parseErr != nil {
@@ -161,7 +163,7 @@ func servePackageEx(context *HttpContext) {
 	}
 }
 
-func serverLaunchPackagesEx(context *HttpContext) {
+func serverLaunchPackagesEx(context *router.HttpContext) {
 	launchIdParam := context.Req.URL.Query().Get("launch_id")
 	launchId, parseErr := strconv.Atoi(launchIdParam)
 	if parseErr != nil {
@@ -185,7 +187,7 @@ func serverLaunchPackagesEx(context *HttpContext) {
 	}
 }
 
-func serverTestCaseEx(context *HttpContext) {
+func serverTestCaseEx(context *router.HttpContext) {
 	testCaseIdParam := context.Req.URL.Query().Get("test_id")
 	testCaseId, parseErr := strconv.Atoi(testCaseIdParam)
 	if parseErr != nil {
@@ -202,7 +204,7 @@ func serverTestCaseEx(context *HttpContext) {
 	}
 }
 
-func serverTestDymanicsEx(context *HttpContext) {
+func serverTestDymanicsEx(context *router.HttpContext) {
 	testCaseIdParam := context.Req.URL.Query().Get("test_id")
 	testCaseId, parseErr := strconv.Atoi(testCaseIdParam)
 	if parseErr != nil {
@@ -219,7 +221,7 @@ func serverTestDymanicsEx(context *HttpContext) {
 	}
 }
 
-func serveDiffLaunchesEx(context *HttpContext) {
+func serveDiffLaunchesEx(context *router.HttpContext) {
 	launchId1Param := context.Req.URL.Query().Get("launch_id1")
 	launchId1, launchId1ParseErr := strconv.Atoi(launchId1Param)
 	if launchId1ParseErr != nil {
@@ -254,7 +256,7 @@ func serveDiffLaunchesEx(context *HttpContext) {
 	}
 }
 
-func serveDeleteLaunchEx(context *HttpContext) {
+func serveDeleteLaunchEx(context *router.HttpContext) {
 	session := context.Session
 	if !session.IsLoggedIn() {
 		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
@@ -293,7 +295,7 @@ func serveDeleteLaunchEx(context *HttpContext) {
 	http.Redirect(context.Resp, context.Req, "/branch?branchId="+strconv.FormatInt(launchInfo.BranchId, 10), http.StatusMovedPermanently)
 }
 
-func serveDeleteThisAndPreviousLaunch(context *HttpContext) {
+func serveDeleteThisAndPreviousLaunch(context *router.HttpContext) {
 	session := context.Session
 	if !session.IsLoggedIn() {
 		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
@@ -333,7 +335,7 @@ func serveDeleteThisAndPreviousLaunch(context *HttpContext) {
 	//http.Redirect(context.Resp, context.Req, "/", http.StatusMovedPermanently)
 }
 
-func serveDeleteBranch(context *HttpContext) {
+func serveDeleteBranch(context *router.HttpContext) {
 	session := context.Session
 	if !session.IsLoggedIn() {
 		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
@@ -370,7 +372,7 @@ func serveDeleteBranch(context *HttpContext) {
 	http.Redirect(context.Resp, context.Req, "/project/"+strconv.FormatInt(projectId, 10), http.StatusMovedPermanently)
 }
 
-func handleLoginEx(context *HttpContext) {
+func handleLoginEx(context *router.HttpContext) {
 
 	session := context.Session
 	if session.IsLoggedIn() {
@@ -404,14 +406,14 @@ func handleLoginEx(context *HttpContext) {
 		}
 
 	} else {
-		SESSION_MANAGER.InitSession(context.Resp, userInfo)
+		sm.InitSession(context.Resp, userInfo)
 		context.Resp.Header().Set("Cache-Control", "no-cache")
 		context.Resp.Header().Set("Pragma", "no-cache")
 		http.Redirect(context.Resp, context.Req, "/", http.StatusFound)
 	}
 }
 
-func handleLogoutEx(context *HttpContext) {
-	SESSION_MANAGER.ClearSession(context.Req, context.Resp)
+func handleLogoutEx(context *router.HttpContext) {
+	sm.ClearSession(context.Req, context.Resp)
 	http.Redirect(context.Resp, context.Req, "/login", http.StatusFound)
 }

@@ -1,13 +1,14 @@
 package main
 
 import (
+	"jutra/router"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 )
 
-func serveListUsersEx(context *HttpContext) {
+func serveListUsersEx(context *router.HttpContext) {
 
 	users := DAO.GetAllUsers()
 
@@ -17,7 +18,7 @@ func serveListUsersEx(context *HttpContext) {
 	}
 }
 
-func serveEditUserEx(context *HttpContext) {
+func serveEditUserEx(context *router.HttpContext) {
 
 	session := context.Session
 	if !session.IsLoggedIn() {
@@ -65,7 +66,7 @@ func serveEditUserEx(context *HttpContext) {
 	}
 }
 
-func serveAddUser(context *HttpContext) {
+func serveAddUser(context *router.HttpContext) {
 	session := context.Session
 	if !session.IsLoggedIn() {
 		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
@@ -96,7 +97,7 @@ func serveAddUser(context *HttpContext) {
 	}
 }
 
-func serveManageDatabase(context *HttpContext) {
+func serveManageDatabase(context *router.HttpContext) {
 
 	rendingObject := DbManagmentRO{}
 

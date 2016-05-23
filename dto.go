@@ -1,13 +1,12 @@
 package main
 
-type RenderObject struct {
-	User *UserRenderInfo
-	Data interface{}
-}
+import (
+	"jutra/session"
+)
 
-type UserRenderInfo struct {
-	LoggedIn bool
-	Details  *UserEntity
+type RenderObject struct {
+	User *session.UserRenderInfo
+	Data interface{}
 }
 
 type HttpErrDTO struct {

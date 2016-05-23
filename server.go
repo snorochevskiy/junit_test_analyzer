@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"jutra/router"
 	"log"
 	"net/http"
 )
@@ -11,7 +12,7 @@ func StartServer(port string) {
 	fs := http.FileServer(http.Dir("static"))
 	http.Handle("/static/", maxAgeHandler(3600, http.StripPrefix("/static/", fs)))
 
-	rh := RoutedHandler{}
+	rh := router.RoutedHandler{}
 	rh.AddRoute("/", serveMainPage)
 	rh.AddRoute("/project/:projectId", serveProject)
 	//rh.AddRoute("/all-branches", serveShowBranches)
