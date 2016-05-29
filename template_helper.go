@@ -60,11 +60,12 @@ func RenderInCommonTemplate(w http.ResponseWriter, dto interface{}, templateName
 	return nil
 }
 
-func RenderInCommonTemplateEx(context *router.HttpContext, dto interface{}, templateName string) error {
+func RenderInCommonTemplateEx(context *router.HttpContext, dto interface{}, templateName string) {
 	tmplt, err := createCommonTemplate(templateName)
 	if err != nil {
 		log.Println(err)
-		return err
+		http.Error(context.Resp, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	ro := RenderObject{
@@ -73,9 +74,9 @@ func RenderInCommonTemplateEx(context *router.HttpContext, dto interface{}, temp
 	}
 	if err := tmplt.ExecuteTemplate(context.Resp, "layout", ro); err != nil {
 		log.Println(err)
-		return err
+		http.Error(context.Resp, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	return nil
 }
 
 func minus(a int, b int) int {

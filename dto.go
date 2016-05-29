@@ -15,7 +15,7 @@ type HttpErrDTO struct {
 }
 
 type ViewLaunchDTO struct {
-	LaunchId int
+	LaunchId int64
 	Label    string
 	BranchId int64
 	Tests    []*TestCaseEntity
@@ -26,19 +26,19 @@ type ViewLaunchDTO struct {
 }
 
 type ViewPackageDTO struct {
-	LaunchId int
+	LaunchId int64
 	Package  string
 	Tests    []*TestCaseEntity
 }
 
 type PackagesDTO struct {
-	LaunchId int
+	LaunchId int64
 	Packages []*PackageEntity
 }
 
 type LaunchesDiffDTO struct {
-	LaunchId1            int
-	LaunchId2            int
+	LaunchId1            int64
+	LaunchId2            int64
 	AddedTests           []*TestCaseEntity
 	RemovedTests         []*TestCaseEntity
 	PassedToFailedTests  []*TestCaseEntity

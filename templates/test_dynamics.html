@@ -5,14 +5,14 @@
 
 <table border="1" class="jutra-table-big">
 	<tr>
-		<th>Branch</th>
+		<th>Branch ID</th>
 		<th>Launch</th>
 		<th>Status</th>
 	</tr>
 
 {{range $index, $val := .}}
 	<tr {{if eq $val.Status "FAILED"}}class="failed"{{end}} {{if eq $val.Status "PASSED"}}class="passed"{{end}} {{if eq $val.Status "SKIPPED"}}class="skipped"{{end}} >
-		<td><a href="/branch?branch_name={{$val.Branch}}">{{$val.Branch}}</a></td>
+		<td><a href="/branch?branchId={{$val.BranchId}}">{{$val.BranchId}}</a></td>
 		<td><a href="/test?test_id={{$val.Id}}">{{$val.CreateDate.Format "2006-01-02 15:04:05"}}</a></td>
 		<td>{{$val.Status}}</td>
 	</tr>

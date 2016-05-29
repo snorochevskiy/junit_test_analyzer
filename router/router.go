@@ -2,7 +2,9 @@ package router
 
 import (
 	"jutra/session"
+	"log"
 	"net/http"
+	"reflect"
 	"strings"
 )
 
@@ -23,8 +25,15 @@ func (p PathElementType) String() string {
 	return "UNKNOW"
 }
 
+type PanicHandler interface {
+	HttpErrorForPanic(panicObject interface{}) (httpError int, errorMessage interface {
+		String() string
+	})
+}
+
 type RoutedHandler struct {
-	Routes []Route
+	Routes       []Route
+	PanicHandler PanicHandler
 }
 
 type HttpContext struct {
@@ -32,6 +41,10 @@ type HttpContext struct {
 	Req        *http.Request
 	Resp       http.ResponseWriter
 	PathParams map[string]string
+}
+
+func (context *HttpContext) QueryParam(name string) string {
+	return context.Req.URL.Query().Get(name)
 }
 
 type Route struct {
@@ -107,6 +120,9 @@ Loop:
 }
 
 func (mh RoutedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	defer mh.recoverPanic(w, r)
+
 	url := r.URL.EscapedPath()
 
 	// TODO: fix favicon issue for apis
@@ -129,4 +145,21 @@ func (mh RoutedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	matchingRoute.Handler(&context)
+}
+
+func (mh RoutedHandler) recoverPanic(w http.ResponseWriter, r *http.Request) {
+	if r := recover(); r != nil {
+
+		v := reflect.ValueOf(r)
+		log.Println("PANIC: %v", v.Type().Name())
+
+		if mh.PanicHandler != nil {
+			code, errorMessage := mh.PanicHandler.HttpErrorForPanic(r)
+			http.Error(w, errorMessage.String(), code)
+			return
+		} else {
+			http.Error(w, "Internal server error", 500)
+			return
+		}
+	}
 }

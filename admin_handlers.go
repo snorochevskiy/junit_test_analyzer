@@ -12,10 +12,7 @@ func serveListUsersEx(context *router.HttpContext) {
 
 	users := DAO.GetAllUsers()
 
-	err := RenderInCommonTemplateEx(context, users, "list_users.html")
-	if err != nil {
-		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+	RenderInCommonTemplateEx(context, users, "list_users.html")
 }
 
 func serveEditUserEx(context *router.HttpContext) {
@@ -23,9 +20,7 @@ func serveEditUserEx(context *router.HttpContext) {
 	session := context.Session
 	if !session.IsLoggedIn() {
 		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
-		if renderErr := RenderInCommonTemplateEx(context, errDto, "error.html"); renderErr != nil {
-			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
+		RenderInCommonTemplateEx(context, errDto, "error.html")
 		return
 	}
 
@@ -43,11 +38,7 @@ func serveEditUserEx(context *router.HttpContext) {
 			return
 		}
 
-		updateErr := DAO.UpdateUser(user)
-		if updateErr != nil {
-			http.Error(context.Resp, "Unable to update user. Reason: "+updateErr.Error(), http.StatusInternalServerError)
-			return
-		}
+		DAO.UpdateUser(user)
 	}
 
 	userIdParam := context.Req.URL.Query().Get("user_id")
@@ -60,19 +51,14 @@ func serveEditUserEx(context *router.HttpContext) {
 
 	user := DAO.GetUserById(int64(userId))
 
-	err := RenderInCommonTemplateEx(context, user, "edit_user.html")
-	if err != nil {
-		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+	RenderInCommonTemplateEx(context, user, "edit_user.html")
 }
 
 func serveAddUser(context *router.HttpContext) {
 	session := context.Session
 	if !session.IsLoggedIn() {
 		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
-		if renderErr := RenderInCommonTemplateEx(context, errDto, "error.html"); renderErr != nil {
-			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
+		RenderInCommonTemplateEx(context, errDto, "error.html")
 		return
 	}
 
@@ -84,17 +70,10 @@ func serveAddUser(context *router.HttpContext) {
 			return
 		}
 
-		err := DAO.InsertUser(user)
-		if err != nil {
-			http.Error(context.Resp, "Unable to create user. Reason: "+err.Error(), http.StatusInternalServerError)
-			return
-		}
+		DAO.InsertUser(user)
 	}
 
-	err := RenderInCommonTemplateEx(context, nil, "add_user.html")
-	if err != nil {
-		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+	RenderInCommonTemplateEx(context, nil, "add_user.html")
 }
 
 func serveManageDatabase(context *router.HttpContext) {
@@ -119,10 +98,7 @@ func serveManageDatabase(context *router.HttpContext) {
 	rendingObject.DbInfo.DbFileName = dbFileName
 	rendingObject.DbInfo.DbFileSize = fileInfo.Size()
 
-	err := RenderInCommonTemplateEx(context, rendingObject, "database_managment.html")
-	if err != nil {
-		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+	RenderInCommonTemplateEx(context, rendingObject, "database_managment.html")
 }
 
 func extractUserFromFormData(r *http.Request) *UserEntity {

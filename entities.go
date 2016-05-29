@@ -96,6 +96,7 @@ type TestFullInfoEntity struct {
 	//Md5Hash      string `column:"md5_hash"`
 
 	Branch     string    `column:"branch"`
+	BranchId   int64     `column:"parent_branch_id"`
 	CreateDate time.Time `column:"creation_date"`
 
 	FailureId sql.NullInt64 `column:"test_case_failure_id"`

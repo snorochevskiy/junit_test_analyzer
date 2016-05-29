@@ -7,12 +7,40 @@ import (
 	"net/http"
 )
 
+type JutraPanicHandler struct {
+}
+
+type JutraHttpErrorRenderObject struct {
+	Message string
+}
+
+func (ro JutraHttpErrorRenderObject) String() string {
+	return ro.Message
+}
+
+func (h *JutraPanicHandler) HttpErrorForPanic(panicObject interface{}) (httpError int, errorMessage interface {
+	String() string
+}) {
+	switch panicObject.(type) {
+	case DaoPanicErr:
+		return 500, JutraHttpErrorRenderObject{Message: panicObject.(DaoPanicErr).Message}
+
+	case ParsePanicErr:
+		return http.StatusBadRequest, JutraHttpErrorRenderObject{Message: panicObject.(ParsePanicErr).Message}
+
+	default:
+		return 500, JutraHttpErrorRenderObject{Message: "Internal Server Error"}
+	}
+}
+
 func StartServer(port string) {
 
 	fs := http.FileServer(http.Dir("static"))
 	http.Handle("/static/", maxAgeHandler(3600, http.StripPrefix("/static/", fs)))
 
 	rh := router.RoutedHandler{}
+	rh.PanicHandler = new(JutraPanicHandler)
+
 	rh.AddRoute("/", serveMainPage)
 	rh.AddRoute("/project/:projectId", serveProject)
 	//rh.AddRoute("/all-branches", serveShowBranches)

@@ -14,11 +14,7 @@ type BranchStatusDto struct {
 }
 
 func serveApiListProjects(context *router.HttpContext) {
-	projects, err := DAO.GetAllProjects()
-	if err != nil {
-		http.Error(context.Resp, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	projects := DAO.GetAllProjects()
 
 	response, jsonErr := json.Marshal(projects)
 	if jsonErr != nil {
@@ -39,11 +35,7 @@ func serveApiBranchesStatus(context *router.HttpContext) {
 		return
 	}
 
-	branches, daoErr := DAO.GetAllBranchesInfo(projectId, nil)
-	if daoErr != nil {
-		http.Error(context.Resp, daoErr.Error(), http.StatusInternalServerError)
-		return
-	}
+	branches := DAO.GetAllBranchesInfo(projectId, nil)
 
 	dtos := make([]*BranchStatusDto, 0, len(branches))
 	for _, v := range branches {

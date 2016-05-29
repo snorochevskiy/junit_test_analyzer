@@ -3,7 +3,6 @@ package main
 import (
 	"jutra/router"
 	sm "jutra/session"
-	"log"
 	"net/http"
 	"sort"
 	"strconv"
@@ -29,95 +28,60 @@ func extractBranchesFilter(r *http.Request) *BranchesFilter {
 }
 
 func serveMainPage(context *router.HttpContext) {
-	projects, err := DAO.GetAllProjects()
-	if err != nil {
-		http.Error(context.Resp, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	projects := DAO.GetAllProjects()
 
 	var ro MainPageRO
 	ro.Projects = projects
 
-	if rendRrr := RenderInCommonTemplateEx(context, ro, "main_page.html"); rendRrr != nil {
-		http.Error(context.Resp, rendRrr.Error(), http.StatusInternalServerError)
-		return
-	}
+	RenderInCommonTemplateEx(context, ro, "main_page.html")
+
 }
 
 func serveProject(context *router.HttpContext) {
 
 	projectIdStr := context.PathParams["projectId"]
 	var projectId int64
-	var err error
+
 	if projectIdStr == "" {
-		projectId, err = DAO.GetProjectIdByProjectName("")
-		if err != nil {
-			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
+		// Get ID of default project
+		projectId = DAO.GetProjectIdByProjectName("")
 	} else {
-		projectId, err = strconv.ParseInt(projectIdStr, 10, 64)
-		if err != nil {
-			http.Error(context.Resp, projectIdStr+" is not a projectId", http.StatusInternalServerError)
-			return
-		}
+		projectId = ParseInt64(projectIdStr, "Invalid project ID")
 	}
 
 	filter := extractBranchesFilter(context.Req)
 
-	branches, err := DAO.GetAllBranchesInfo(projectId, filter)
-	if err != nil {
-		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
+	branches := DAO.GetAllBranchesInfo(projectId, filter)
 
 	sort.Sort(sort.Reverse(SortableSlice(branches)))
 	sort.Reverse(SortableSlice(branches))
 
-	rendRrr := RenderInCommonTemplateEx(context, branches, "list_branches.html")
-	if rendRrr != nil {
-		http.Error(context.Resp, rendRrr.Error(), http.StatusInternalServerError)
-		return
-	}
+	RenderInCommonTemplateEx(context, branches, "list_branches.html")
+
 }
 
 func serveFilterBranches(context *router.HttpContext) {
 
-	rendRrr := RenderInCommonTemplateEx(context, nil, "filter_branches.html")
-	if rendRrr != nil {
-		http.Error(context.Resp, rendRrr.Error(), http.StatusInternalServerError)
-		return
-	}
+	RenderInCommonTemplateEx(context, nil, "filter_branches.html")
+
 }
 
 func serveLaunchesInBranchEx(context *router.HttpContext) {
 
 	branchIdStr := context.Req.URL.Query().Get("branchId")
-	branchId, err := strconv.ParseInt(branchIdStr, 10, 64)
-	if err != nil {
-		http.Error(context.Resp, "Wrong branch ID", http.StatusInternalServerError)
-		return
-	}
+	branchId := ParseInt64(branchIdStr, "Wrong branch ID")
 
 	launches := DAO.GetAllLaunchesInBranch(branchId)
 
-	if err := RenderInCommonTemplateEx(context, launches, "view_branch.html"); err != nil {
-		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
+	RenderInCommonTemplateEx(context, launches, "view_branch.html")
 }
 
 func serverLaunchEx(context *router.HttpContext) {
 	launchIdParam := context.Req.URL.Query().Get("launch_id")
-	launchId, parseErr := strconv.Atoi(launchIdParam)
-	if parseErr != nil {
-		log.Println(parseErr)
-		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
+	launchId := ParseInt64(launchIdParam, "Invalid test run ID")
 
-	testCases := DAO.GetAllTestsForLaunch(int64(launchId))
-	launchInfo := DAO.GetLaunchInfo(int64(launchId))
+	testCases := DAO.GetAllTestsForLaunch(launchId)
+	launchInfo := DAO.GetLaunchInfo(launchId)
 
 	var dto ViewLaunchDTO
 	dto.LaunchId = launchId
@@ -129,20 +93,12 @@ func serverLaunchEx(context *router.HttpContext) {
 	dto.PassedTestsNum = TestsWithStatusNum(dto.Tests, TEST_CASE_STATUS_PASSED)
 	dto.SkippedTestsNum = TestsWithStatusNum(dto.Tests, TEST_CASE_STATUS_SKIPPED)
 
-	err := RenderInCommonTemplateEx(context, dto, "view_launch.html")
-	if err != nil {
-		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+	RenderInCommonTemplateEx(context, dto, "view_launch.html")
 }
 
 func servePackageEx(context *router.HttpContext) {
 	launchIdParam := context.Req.URL.Query().Get("launch_id")
-	launchId, parseErr := strconv.Atoi(launchIdParam)
-	if parseErr != nil {
-		log.Println(parseErr)
-		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
+	launchId := ParseInt64(launchIdParam, "Invalid test run ID")
 
 	packageParam := context.Req.URL.Query().Get("package")
 	if packageParam == "" {
@@ -157,86 +113,46 @@ func servePackageEx(context *router.HttpContext) {
 	dto.Package = packageParam
 	dto.Tests = testCases
 
-	err := RenderInCommonTemplateEx(context, dto, "view_package.html")
-	if err != nil {
-		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+	RenderInCommonTemplateEx(context, dto, "view_package.html")
 }
 
 func serverLaunchPackagesEx(context *router.HttpContext) {
 	launchIdParam := context.Req.URL.Query().Get("launch_id")
-	launchId, parseErr := strconv.Atoi(launchIdParam)
-	if parseErr != nil {
-		log.Println(parseErr)
-		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
+	launchId := ParseInt64(launchIdParam, "Invalid test run ID")
 
-	packages, err := DAO.GetPackagesForLaunch(int64(launchId))
-	if err != nil {
-		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+	packages := DAO.GetPackagesForLaunch(int64(launchId))
 
 	var dto PackagesDTO
 	dto.LaunchId = launchId
 	dto.Packages = packages
 
-	err = RenderInCommonTemplateEx(context, dto, "view_packages.html")
-	if err != nil {
-		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+	RenderInCommonTemplateEx(context, dto, "view_packages.html")
 }
 
 func serverTestCaseEx(context *router.HttpContext) {
 	testCaseIdParam := context.Req.URL.Query().Get("test_id")
-	testCaseId, parseErr := strconv.Atoi(testCaseIdParam)
-	if parseErr != nil {
-		log.Println(parseErr)
-		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
+	testCaseId := ParseInt64(testCaseIdParam, "Invalid test ID")
 
 	testCase := DAO.GetTestCaseDetails(int64(testCaseId))
 
-	err := RenderInCommonTemplateEx(context, testCase, "view_test_case.html")
-	if err != nil {
-		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+	RenderInCommonTemplateEx(context, testCase, "view_test_case.html")
 }
 
 func serverTestDymanicsEx(context *router.HttpContext) {
 	testCaseIdParam := context.Req.URL.Query().Get("test_id")
-	testCaseId, parseErr := strconv.Atoi(testCaseIdParam)
-	if parseErr != nil {
-		log.Println(parseErr)
-		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
+	testCaseId := ParseInt64(testCaseIdParam, "Invalid test ID")
 
-	tests := DAO.GetTestDynamics(int64(testCaseId))
+	tests := DAO.GetTestDynamics(testCaseId)
 
-	err := RenderInCommonTemplateEx(context, tests, "test_dynamics.html")
-	if err != nil {
-		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+	RenderInCommonTemplateEx(context, tests, "test_dynamics.html")
 }
 
 func serveDiffLaunchesEx(context *router.HttpContext) {
 	launchId1Param := context.Req.URL.Query().Get("launch_id1")
-	launchId1, launchId1ParseErr := strconv.Atoi(launchId1Param)
-	if launchId1ParseErr != nil {
-		log.Println(launchId1ParseErr)
-		http.Error(context.Resp, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		return
-	}
+	launchId1 := ParseInt64(launchId1Param, "Invalid left test run ID")
 
 	launchId2Param := context.Req.URL.Query().Get("launch_id2")
-	launchId2, launchId2ParseErr := strconv.Atoi(launchId2Param)
-	if launchId2ParseErr != nil {
-		log.Println(launchId2ParseErr)
-		http.Error(context.Resp, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		return
-	}
+	launchId2 := ParseInt64(launchId2Param, "Invalid right test run ID")
 
 	var dto LaunchesDiffDTO
 	dto.LaunchId1 = launchId1
@@ -250,29 +166,19 @@ func serveDiffLaunchesEx(context *router.HttpContext) {
 	dto.SkippedToFailedTests = DAO.GetTestsFromStatus1ToStatus2(int64(launchId1), int64(launchId2), TEST_CASE_STATUS_SKIPPED, TEST_CASE_STATUS_FAILED)
 	dto.SkippedToPassedTests = DAO.GetTestsFromStatus1ToStatus2(int64(launchId1), int64(launchId2), TEST_CASE_STATUS_SKIPPED, TEST_CASE_STATUS_PASSED)
 
-	err := RenderInCommonTemplateEx(context, dto, "view_launches_diff.html")
-	if err != nil {
-		http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-	}
+	RenderInCommonTemplateEx(context, dto, "view_launches_diff.html")
 }
 
 func serveDeleteLaunchEx(context *router.HttpContext) {
 	session := context.Session
 	if !session.IsLoggedIn() {
 		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
-		if renderErr := RenderInCommonTemplateEx(context, errDto, "error.html"); renderErr != nil {
-			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
+		RenderInCommonTemplateEx(context, errDto, "error.html")
 		return
 	}
 
 	launchIdParam := context.Req.URL.Query().Get("launch_id")
-	launchId, parseErr := strconv.Atoi(launchIdParam)
-	if parseErr != nil {
-		log.Println(parseErr)
-		http.Error(context.Resp, "Invalid launch id", http.StatusBadRequest)
-		return
-	}
+	launchId := ParseInt64(launchIdParam, "Invalid test run ID")
 
 	launchInfo := DAO.GetLaunchInfo(int64(launchId))
 	if launchInfo == nil {
@@ -283,9 +189,7 @@ func serveDeleteLaunchEx(context *router.HttpContext) {
 	err := DAO.DeleteLaunch(int64(launchId))
 	if err != nil {
 		daoErr := HttpErrDTO{Code: http.StatusInternalServerError, Message: err.Error()}
-		if renderErr := RenderInCommonTemplateEx(context, daoErr, "error.html"); renderErr != nil {
-			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
+		RenderInCommonTemplateEx(context, daoErr, "error.html")
 		return
 	}
 
@@ -299,19 +203,12 @@ func serveDeleteThisAndPreviousLaunch(context *router.HttpContext) {
 	session := context.Session
 	if !session.IsLoggedIn() {
 		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
-		if renderErr := RenderInCommonTemplateEx(context, errDto, "error.html"); renderErr != nil {
-			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
+		RenderInCommonTemplateEx(context, errDto, "error.html")
 		return
 	}
 
 	launchIdParam := context.Req.URL.Query().Get("launch_id")
-	launchId, parseErr := strconv.ParseInt(launchIdParam, 10, 64)
-	if parseErr != nil {
-		log.Println(parseErr)
-		http.Error(context.Resp, "Invalid launch id", http.StatusBadRequest)
-		return
-	}
+	launchId := ParseInt64(launchIdParam, "Invalid launch id")
 
 	launchInfo := DAO.GetLaunchInfo(launchId)
 	if launchInfo == nil {
@@ -319,14 +216,7 @@ func serveDeleteThisAndPreviousLaunch(context *router.HttpContext) {
 		return
 	}
 
-	err := DAO.DeleteGivenLaunchWithAllPrevious(launchId)
-	if err != nil {
-		daoErr := HttpErrDTO{Code: http.StatusInternalServerError, Message: err.Error()}
-		if renderErr := RenderInCommonTemplateEx(context, daoErr, "error.html"); renderErr != nil {
-			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
-		return
-	}
+	DAO.DeleteGivenLaunchWithAllPrevious(launchId)
 
 	// TODO : Find why orphans tests occure after launche is deleted
 	DAO.DeleteOrphans()
@@ -339,18 +229,12 @@ func serveDeleteBranch(context *router.HttpContext) {
 	session := context.Session
 	if !session.IsLoggedIn() {
 		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
-		if renderErr := RenderInCommonTemplateEx(context, errDto, "error.html"); renderErr != nil {
-			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
+		RenderInCommonTemplateEx(context, errDto, "error.html")
 		return
 	}
 
 	branchIdStr := context.PathParams["branchId"]
-	branchId, err := strconv.ParseInt(branchIdStr, 10, 64)
-	if err != nil {
-		http.Error(context.Resp, "Invalid branch ID", http.StatusBadRequest)
-		return
-	}
+	branchId := ParseInt64(branchIdStr, "Invalid branch ID")
 
 	projectId, err := DAO.GetParentProjectForBranch(branchId)
 	if err != nil {
@@ -358,13 +242,7 @@ func serveDeleteBranch(context *router.HttpContext) {
 		return
 	}
 
-	if err := DAO.DeleteAllLaunchesInBranch(branchId); err != nil {
-		daoErr := HttpErrDTO{Code: http.StatusInternalServerError, Message: err.Error()}
-		if renderErr := RenderInCommonTemplateEx(context, daoErr, "error.html"); renderErr != nil {
-			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
-		return
-	}
+	DAO.DeleteAllLaunchesInBranch(branchId)
 
 	// TODO : Find why orphans tests occure after launche is deleted
 	DAO.DeleteOrphans()
@@ -381,9 +259,7 @@ func handleLoginEx(context *router.HttpContext) {
 	}
 
 	if context.Req.Method != "POST" {
-		if err := RenderInCommonTemplateEx(context, nil, "login.html"); err != nil {
-			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
+		RenderInCommonTemplateEx(context, nil, "login.html")
 		return
 	}
 
@@ -401,16 +277,14 @@ func handleLoginEx(context *router.HttpContext) {
 	}
 
 	if login == "" || errMsg != "" {
-		if err := RenderInCommonTemplateEx(context, errMsg, "login.html"); err != nil {
-			http.Error(context.Resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
+		RenderInCommonTemplateEx(context, errMsg, "login.html")
+		return
 
-	} else {
-		sm.InitSession(context.Resp, userInfo)
-		context.Resp.Header().Set("Cache-Control", "no-cache")
-		context.Resp.Header().Set("Pragma", "no-cache")
-		http.Redirect(context.Resp, context.Req, "/", http.StatusFound)
 	}
+	sm.InitSession(context.Resp, userInfo)
+	context.Resp.Header().Set("Cache-Control", "no-cache")
+	context.Resp.Header().Set("Pragma", "no-cache")
+	http.Redirect(context.Resp, context.Req, "/", http.StatusFound)
 }
 
 func handleLogoutEx(context *router.HttpContext) {

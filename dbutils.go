@@ -97,6 +97,11 @@ func ExecuteInsert(query string, args ...interface{}) (sql.Result, error) {
 	return execResult, execErr
 }
 
+func ExecuteDeleteNoResult(query string, args ...interface{}) error {
+	_, err := ExecuteDelete(query, args)
+	return err
+}
+
 func ExecuteDelete(query string, args ...interface{}) (sql.Result, error) {
 	database, openErr := OpenDbConnection()
 	if openErr != nil {
