@@ -8,6 +8,7 @@ import (
 )
 
 type BranchStatusDto struct {
+	BranchId   int64  `json:"branch_id"`
 	BranchName string `json:"branch_name"`
 	Status     string `json:"last_build_status"`
 	Date       string `json:"date"`
@@ -40,6 +41,7 @@ func serveApiBranchesStatus(context *router.HttpContext) {
 	dtos := make([]*BranchStatusDto, 0, len(branches))
 	for _, v := range branches {
 		dto := new(BranchStatusDto)
+		dto.BranchId = v.Id
 		dto.BranchName = v.BranchName
 		if v.LastLauchFailed() {
 			dto.Status = "FAILED"
