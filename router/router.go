@@ -2,9 +2,7 @@ package router
 
 import (
 	"jutra/session"
-	"log"
 	"net/http"
-	"reflect"
 	"strings"
 )
 
@@ -149,9 +147,6 @@ func (mh RoutedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (mh RoutedHandler) recoverPanic(w http.ResponseWriter, r *http.Request) {
 	if r := recover(); r != nil {
-
-		v := reflect.ValueOf(r)
-		log.Println("PANIC: %v", v.Type().Name())
 
 		if mh.PanicHandler != nil {
 			code, errorMessage := mh.PanicHandler.HttpErrorForPanic(r)

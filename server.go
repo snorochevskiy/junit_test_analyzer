@@ -23,10 +23,16 @@ func (h *JutraPanicHandler) HttpErrorForPanic(panicObject interface{}) (httpErro
 }) {
 	switch panicObject.(type) {
 	case DaoPanicErr:
+		log.Println(panicObject.(DaoPanicErr).Message)
 		return 500, JutraHttpErrorRenderObject{Message: panicObject.(DaoPanicErr).Message}
 
 	case ParsePanicErr:
+		log.Println(panicObject.(ParsePanicErr).Message)
 		return http.StatusBadRequest, JutraHttpErrorRenderObject{Message: panicObject.(ParsePanicErr).Message}
+
+	case string:
+		log.Println(panicObject.(string))
+		return http.StatusBadRequest, JutraHttpErrorRenderObject{Message: panicObject.(string)}
 
 	default:
 		return 500, JutraHttpErrorRenderObject{Message: "Internal Server Error"}

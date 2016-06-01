@@ -98,7 +98,7 @@ func ExecuteInsert(query string, args ...interface{}) (sql.Result, error) {
 }
 
 func ExecuteDeleteNoResult(query string, args ...interface{}) error {
-	_, err := ExecuteDelete(query, args)
+	_, err := ExecuteDelete(query, args...)
 	return err
 }
 

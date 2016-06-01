@@ -412,6 +412,7 @@ func (dao *DaoService) DeleteAllLaunchesInBranch(branchId int64) {
 	DaoChechAndPanic(ExecuteDeleteNoResult("DELETE FROM test_launches WHERE parent_branch_id = ?", branchId))
 
 	dao.DeleteBranch(branchId)
+	dao.DeleteOrphans()
 }
 
 func (dao *DaoService) DeleteBranchIfEmpty(branchId int64) {
