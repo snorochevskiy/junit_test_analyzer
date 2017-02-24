@@ -12,7 +12,7 @@ func serveListUsersEx(context *router.HttpContext) {
 
 	users := DAO.GetAllUsers()
 
-	RenderInCommonTemplateEx(context, users, "list_users.html")
+	RenderInCommonTemplateEx(context, users, "list_users.tmpl")
 }
 
 func serveEditUserEx(context *router.HttpContext) {
@@ -20,7 +20,7 @@ func serveEditUserEx(context *router.HttpContext) {
 	session := context.Session
 	if !session.IsLoggedIn() {
 		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
-		RenderInCommonTemplateEx(context, errDto, "error.html")
+		RenderInCommonTemplateEx(context, errDto, "error.tmpl")
 		return
 	}
 
@@ -51,14 +51,14 @@ func serveEditUserEx(context *router.HttpContext) {
 
 	user := DAO.GetUserById(int64(userId))
 
-	RenderInCommonTemplateEx(context, user, "edit_user.html")
+	RenderInCommonTemplateEx(context, user, "edit_user.tmpl")
 }
 
 func serveAddUser(context *router.HttpContext) {
 	session := context.Session
 	if !session.IsLoggedIn() {
 		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
-		RenderInCommonTemplateEx(context, errDto, "error.html")
+		RenderInCommonTemplateEx(context, errDto, "error.tmpl")
 		return
 	}
 
@@ -73,7 +73,7 @@ func serveAddUser(context *router.HttpContext) {
 		DAO.InsertUser(user)
 	}
 
-	RenderInCommonTemplateEx(context, nil, "add_user.html")
+	RenderInCommonTemplateEx(context, nil, "add_user.tmpl")
 }
 
 func serveManageDatabase(context *router.HttpContext) {
@@ -98,7 +98,7 @@ func serveManageDatabase(context *router.HttpContext) {
 	rendingObject.DbInfo.DbFileName = dbFileName
 	rendingObject.DbInfo.DbFileSize = fileInfo.Size()
 
-	RenderInCommonTemplateEx(context, rendingObject, "database_managment.html")
+	RenderInCommonTemplateEx(context, rendingObject, "database_managment.tmpl")
 }
 
 func extractUserFromFormData(r *http.Request) *UserEntity {

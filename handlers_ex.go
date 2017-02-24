@@ -33,7 +33,7 @@ func serveMainPage(context *router.HttpContext) {
 	var ro MainPageRO
 	ro.Projects = projects
 
-	RenderInCommonTemplateEx(context, ro, "main_page.html")
+	RenderInCommonTemplateEx(context, ro, "main_page.tmpl")
 
 }
 
@@ -56,13 +56,13 @@ func serveProject(context *router.HttpContext) {
 	sort.Sort(sort.Reverse(SortableSlice(branches)))
 	sort.Reverse(SortableSlice(branches))
 
-	RenderInCommonTemplateEx(context, branches, "list_branches.html")
+	RenderInCommonTemplateEx(context, branches, "list_branches.tmpl")
 
 }
 
 func serveFilterBranches(context *router.HttpContext) {
 
-	RenderInCommonTemplateEx(context, nil, "filter_branches.html")
+	RenderInCommonTemplateEx(context, nil, "filter_branches.tmpl")
 
 }
 
@@ -73,7 +73,7 @@ func serveLaunchesInBranchEx(context *router.HttpContext) {
 
 	launches := DAO.GetAllLaunchesInBranch(branchId)
 
-	RenderInCommonTemplateEx(context, launches, "view_branch.html")
+	RenderInCommonTemplateEx(context, launches, "view_branch.tmpl")
 }
 
 func serverLaunchEx(context *router.HttpContext) {
@@ -93,7 +93,7 @@ func serverLaunchEx(context *router.HttpContext) {
 	dto.PassedTestsNum = TestsWithStatusNum(dto.Tests, TEST_CASE_STATUS_PASSED)
 	dto.SkippedTestsNum = TestsWithStatusNum(dto.Tests, TEST_CASE_STATUS_SKIPPED)
 
-	RenderInCommonTemplateEx(context, dto, "view_launch.html")
+	RenderInCommonTemplateEx(context, dto, "view_launch.tmpl")
 }
 
 func servePackageEx(context *router.HttpContext) {
@@ -113,7 +113,7 @@ func servePackageEx(context *router.HttpContext) {
 	dto.Package = packageParam
 	dto.Tests = testCases
 
-	RenderInCommonTemplateEx(context, dto, "view_package.html")
+	RenderInCommonTemplateEx(context, dto, "view_package.tmpl")
 }
 
 func serverLaunchPackagesEx(context *router.HttpContext) {
@@ -126,7 +126,7 @@ func serverLaunchPackagesEx(context *router.HttpContext) {
 	dto.LaunchId = launchId
 	dto.Packages = packages
 
-	RenderInCommonTemplateEx(context, dto, "view_packages.html")
+	RenderInCommonTemplateEx(context, dto, "view_packages.tmpl")
 }
 
 func serverTestCaseEx(context *router.HttpContext) {
@@ -135,7 +135,7 @@ func serverTestCaseEx(context *router.HttpContext) {
 
 	testCase := DAO.GetTestCaseDetails(int64(testCaseId))
 
-	RenderInCommonTemplateEx(context, testCase, "view_test_case.html")
+	RenderInCommonTemplateEx(context, testCase, "view_test_case.tmpl")
 }
 
 func serverTestDymanicsEx(context *router.HttpContext) {
@@ -144,7 +144,7 @@ func serverTestDymanicsEx(context *router.HttpContext) {
 
 	tests := DAO.GetTestDynamics(testCaseId)
 
-	RenderInCommonTemplateEx(context, tests, "test_dynamics.html")
+	RenderInCommonTemplateEx(context, tests, "test_dynamics.tmpl")
 }
 
 func serveDiffLaunchesEx(context *router.HttpContext) {
@@ -166,14 +166,14 @@ func serveDiffLaunchesEx(context *router.HttpContext) {
 	dto.SkippedToFailedTests = DAO.GetTestsFromStatus1ToStatus2(int64(launchId1), int64(launchId2), TEST_CASE_STATUS_SKIPPED, TEST_CASE_STATUS_FAILED)
 	dto.SkippedToPassedTests = DAO.GetTestsFromStatus1ToStatus2(int64(launchId1), int64(launchId2), TEST_CASE_STATUS_SKIPPED, TEST_CASE_STATUS_PASSED)
 
-	RenderInCommonTemplateEx(context, dto, "view_launches_diff.html")
+	RenderInCommonTemplateEx(context, dto, "view_launches_diff.tmpl")
 }
 
 func serveDeleteLaunchEx(context *router.HttpContext) {
 	session := context.Session
 	if !session.IsLoggedIn() {
 		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
-		RenderInCommonTemplateEx(context, errDto, "error.html")
+		RenderInCommonTemplateEx(context, errDto, "error.tmpl")
 		return
 	}
 
@@ -189,7 +189,7 @@ func serveDeleteLaunchEx(context *router.HttpContext) {
 	err := DAO.DeleteLaunch(int64(launchId))
 	if err != nil {
 		daoErr := HttpErrDTO{Code: http.StatusInternalServerError, Message: err.Error()}
-		RenderInCommonTemplateEx(context, daoErr, "error.html")
+		RenderInCommonTemplateEx(context, daoErr, "error.tmpl")
 		return
 	}
 
@@ -203,7 +203,7 @@ func serveDeleteThisAndPreviousLaunch(context *router.HttpContext) {
 	session := context.Session
 	if !session.IsLoggedIn() {
 		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
-		RenderInCommonTemplateEx(context, errDto, "error.html")
+		RenderInCommonTemplateEx(context, errDto, "error.tmpl")
 		return
 	}
 
@@ -229,7 +229,7 @@ func serveDeleteBranch(context *router.HttpContext) {
 	session := context.Session
 	if !session.IsLoggedIn() {
 		errDto := HttpErrDTO{Code: 403, Message: "No permissions"}
-		RenderInCommonTemplateEx(context, errDto, "error.html")
+		RenderInCommonTemplateEx(context, errDto, "error.tmpl")
 		return
 	}
 
@@ -259,7 +259,7 @@ func handleLoginEx(context *router.HttpContext) {
 	}
 
 	if context.Req.Method != "POST" {
-		RenderInCommonTemplateEx(context, nil, "login.html")
+		RenderInCommonTemplateEx(context, nil, "login.tmpl")
 		return
 	}
 
@@ -277,7 +277,7 @@ func handleLoginEx(context *router.HttpContext) {
 	}
 
 	if login == "" || errMsg != "" {
-		RenderInCommonTemplateEx(context, errMsg, "login.html")
+		RenderInCommonTemplateEx(context, errMsg, "login.tmpl")
 		return
 
 	}
